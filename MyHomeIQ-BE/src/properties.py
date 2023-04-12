@@ -1,7 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
+from tuya_connector import TuyaOpenAPI
+
 ACCESS_ID = "q5r8cmmu7epcxttt7vgf"
 ACCESS_KEY = "85a47365a7c04bc8ba9dfce9823c2038"
 API_ENDPOINT = "https://openapi.tuyaeu.com"
 MQ_ENDPOINT = "wss://mqe.tuyaeu.com:8285/"
+
+flag = False
+
+def get_openapi_instance():
+    global flag
+    openapi = TuyaOpenAPI(API_ENDPOINT, ACCESS_ID, ACCESS_KEY)
+    
+    if not flag:
+        openapi.connect()
+        flag = True
+
+    return openapi

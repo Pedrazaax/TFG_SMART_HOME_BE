@@ -37,7 +37,7 @@ users_db = {
         "password": "$2a$12$EwR01rLULLfEtz7kEEVdzewDxDPzYK.0YX3oYTWzQYEsbGa1Ecq7a"
     },
     "Antonio":{
-        "username":"antonio",
+        "username":"Antonio",
         "name": "Antonio",
         "email": "Antonio@gmail.com",
         "disabled": True,
