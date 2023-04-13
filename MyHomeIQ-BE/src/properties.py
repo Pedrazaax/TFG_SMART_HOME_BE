@@ -12,9 +12,9 @@ flag = False
 
 def get_openapi_instance():
     global flag
-    openapi = TuyaOpenAPI(API_ENDPOINT, ACCESS_ID, ACCESS_KEY)
     
     if not flag:
+        openapi = TuyaOpenAPI(API_ENDPOINT, ACCESS_ID, ACCESS_KEY)
         openapi.connect()
         flag = True
 
