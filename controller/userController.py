@@ -4,11 +4,11 @@ from db.schemas.user import user_schema, users_schema
 from db.client import client
 from bson import ObjectId
 
-router = APIRouter(prefix="/users",
+app = APIRouter(prefix="/users",
                    tags=["Users"],
                    responses={404: {"detail":"No encontrado"}})
 
-@router.get("/", response_model=list[User])
+@app.get("/", response_model=list[User])
 async def users():
     users = users_schema(client.users.find())
     if len(users) == 0:
@@ -16,16 +16,16 @@ async def users():
     
     return users
 
-@router.get("/{id}")  # Path
+@app.get("/{id}")  # Path
 async def user(id: str):
     return search_user("_id", ObjectId(id))
 
 
-@router.get("/")  # Query
+@app.get("/")  # Query
 async def user(id: str):
     return search_user("_id", ObjectId(id))
     
-@router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
+@app.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
 async def registerUser(user: User):
     if type(search_user("email", user.email)) == User:
         raise HTTPException(
@@ -40,7 +40,7 @@ async def registerUser(user: User):
 
     return User(**new_user)
 
-@router.put("/update", response_model=User)
+@app.put("/update", response_model=User)
 async def updateUser(user: User):
     user_dict = dict(user)
     del user_dict["id"]
@@ -52,7 +52,7 @@ async def updateUser(user: User):
 
     return search_user("_id", ObjectId(user.id))
     
-@router.delete("/delete/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/delete/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def deleteUser(id: str):
     found = client.users.find_one_and_delete({"_id": ObjectId(id)})
 

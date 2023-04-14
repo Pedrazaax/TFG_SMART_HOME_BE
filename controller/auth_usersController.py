@@ -9,7 +9,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_DURATION = 1
 SECRET = "256576dfohbjpkwmsdga8987098'09òkdfsagsa24142jh1k"
 
-router = APIRouter(prefix="/auth",
+app = APIRouter(prefix="/auth",
                    tags=["Authentication"],
                    responses={status.HTTP_404_NOT_FOUND: {"detail":"No encontrado"}})
 
@@ -72,7 +72,7 @@ async def current_user(user: User = Depends(auth_user)):
 
     return user
 
-@router.post("/login")
+@app.post("/login")
 async def login(form: OAuth2PasswordRequestForm = Depends()):
     user_db = users_db.get(form.username)
 
@@ -91,6 +91,6 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
 
     return {"access_token": jwt.encode(access_token, SECRET, algorithm=ALGORITHM), "token_type": "bearer"}
 
-@router.get("/me")
+@app.get("/me")
 async def me(user: User = Depends(current_user)):
     return user

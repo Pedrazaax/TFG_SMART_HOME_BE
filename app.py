@@ -10,6 +10,6 @@ app = FastAPI()
 
 #Routers
 app.mount("/static", StaticFiles(directory="static"), name="static")
-app.include_router(userController.router)
-app.include_router(auth_usersController.router)
-app.include_router(deviceController.router)
+app.include_router(userController.app)
+app.include_router(auth_usersController.app)
+app.include_router(deviceController.app)

@@ -10,7 +10,7 @@ from properties import get_openapi_instance
 #from db.schemas.thermostat import thermostat_schema, thermostats_schema
 #from db.client import client
 
-router = APIRouter(prefix="/devices",
+app = APIRouter(prefix="/devices",
                    tags=["Devices"],
                    responses={404: {"detail":"No encontrado"}})
 
@@ -26,7 +26,7 @@ class Device(BaseModel):
     commands: List[Command]
 
 # Control del dispositivo
-@router.post("/control", response_model=Device)
+@app.post("/control", response_model=Device)
 async def control_device(device: Device):
     # Convertir la lista de comandos a una lista de diccionarios
     commands = [command.dict() for command in device.commands]
