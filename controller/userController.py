@@ -3,12 +3,13 @@ from db.models.user import User
 from db.schemas.user import user_schema, users_schema
 from db.client import client
 from bson import ObjectId
+from typing import List
 
 app = APIRouter(prefix="/users",
                    tags=["Users"],
                    responses={404: {"detail":"No encontrado"}})
 
-@app.get("/", response_model=list[User])
+@app.get("/", response_model=List[User])
 async def users():
     users = users_schema(client.users.find())
     if len(users) == 0:
