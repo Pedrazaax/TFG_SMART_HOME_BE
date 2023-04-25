@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
+from bson import ObjectId
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from typing import List, Union
+from db.models.device import Device
+from db.schemas.device import device_schema, devices_schema
+from db.client import client
 from properties import get_openapi_instance
 
 #from db.models.thermostat import Thermostat
@@ -16,14 +20,14 @@ app = APIRouter(prefix="/devices",
 
 openapi = get_openapi_instance()
 
-class Command(BaseModel):
-    code: str
-    value: Union[str, int, bool]
-
-class Device(BaseModel):
-    idDevice: str
-    key: str
-    commands: List[Command]
+# Ver dispositivos
+@app.get("/", response_model=List[Device])
+async def devices():
+    devices = devices_schema(client.devices.find())
+    if len(devices) == 0:
+        raise HTTPException(status_code= 204, detail="La lista está vacía")
+    
+    return devices
 
 # Control del dispositivo
 @app.post("/control", response_model=Device)
@@ -37,7 +41,32 @@ async def control_device(device: Device):
 
     openapi.post('/v1.0/iot-03/devices/{}/commands'.format(device.idDevice), {'commands': send_command})
 
+    client.devices.find_one_and_replace(device)
+
     return device
+
+# Eliminar dispositivo
+@app.delete(("/delete"), response_model=Device)
+async def deleteDevice(id: str):
+    found = client.devices.find_one_and_delete({"_id": ObjectId(id)})
+
+    if not found:
+        raise HTTPException(status_code = 404, detail="No se ha actualizado el dispositivo")
+
+# Añadir dispositivo
+@app.post("/create", status_code=status.HTTP_204_NO_CONTENT)
+async def add_device(device:Device):
+    if type(search_device("idDevice", device.idDevice)) == Device:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El dispositivo ya existe")
+    
+    device_dict = dict(device)
+    del device_dict["id"]
+
+    id = client.devices.insert_one(device_dict).inserted_id
+    new_device = device_schema(client.devices.find_one({"_id": id}))
+
+    return Device(**new_device)
+
 
 # Método para eliminar las comillas de los valores y poder enviarlo a openapi correctamente
 def no_comillas(commands):
@@ -53,3 +82,14 @@ def no_comillas(commands):
                         command[key] = int(value)
                     except ValueError:
                         command[key] = value.strip('"')
+
+def search_device(field: str, key):
+    try:
+        device = client.devices.find_one({field: key})
+        if device is None:
+            return None
+        
+        return Device(**device_schema(device))
+    
+    except:
+        raise HTTPException(status_code = 404, detail="No se ha encontrado el usuario")
