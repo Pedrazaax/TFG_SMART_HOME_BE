@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
+import json
 from bson import ObjectId
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
-from typing import List, Union
-from db.models.device import Device
+from typing import List
+from db.models.Device import Device, Command
 from db.schemas.device import device_schema, devices_schema
 from db.client import client
 from properties import get_openapi_instance
@@ -29,6 +29,39 @@ async def devices():
     
     return devices
 
+# Estado del dispositivo
+@app.get("/status/{idDevice}", response_model=List[Command])
+async def state_device(idDevice: str):
+    respuesta = openapi.get('/v1.0/iot-03/devices/{}/status'.format(idDevice))
+
+    #respuesta["result"] --> commands del idDevice Reemplazar en la bbdd Device
+    command = respuesta["result"]
+    return command
+
+# Estado de varios dispositivos
+@app.get("/statusDevices/")
+async def state_device(idDevices):
+
+    respuesta = openapi.get('/v1.0/iot-03/devices/status?device_ids={}'.format(idDevices))
+
+    return respuesta
+
+# Video Stream URL
+@app.get("/video/{idDevice}")
+async def videoStream(idDevice: str):
+
+    jsonType = {"type":"hls"}
+    respuesta = openapi.post('/v1.0/devices/{}/stream/actions/allocate'.format(idDevice), jsonType)
+
+    url =respuesta["result"]["url"]
+
+    jsonUrl = {
+        "url": url
+    }
+
+    return jsonUrl
+
+
 # Control del dispositivo
 @app.post("/control", response_model=Device)
 async def control_device(device: Device):
@@ -41,20 +74,25 @@ async def control_device(device: Device):
 
     openapi.post('/v1.0/iot-03/devices/{}/commands'.format(device.idDevice), {'commands': send_command})
 
-    client.devices.find_one_and_replace(device)
+    #client.devices.find_one_and_replace(device)
 
     return device
 
 # Eliminar dispositivo
-@app.delete(("/delete"), response_model=Device)
+@app.delete(("/delete/{id}"),status_code=status.HTTP_204_NO_CONTENT)
 async def deleteDevice(id: str):
-    found = client.devices.find_one_and_delete({"_id": ObjectId(id)})
+
+    jsoID = {
+        "idDevice": id
+    }
+
+    found = client.devices.find_one_and_delete(jsoID)
 
     if not found:
-        raise HTTPException(status_code = 404, detail="No se ha actualizado el dispositivo")
+        raise HTTPException(status_code = 404, detail="No se ha eliminado el dispositivo")
 
 # Añadir dispositivo
-@app.post("/create", status_code=status.HTTP_204_NO_CONTENT)
+@app.post("/create",status_code=status.HTTP_201_CREATED, response_model=Device)
 async def add_device(device:Device):
     if type(search_device("idDevice", device.idDevice)) == Device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El dispositivo ya existe")
@@ -63,10 +101,9 @@ async def add_device(device:Device):
     del device_dict["id"]
 
     id = client.devices.insert_one(device_dict).inserted_id
-    new_device = device_schema(client.devices.find_one({"_id": id}))
+    new_device = device_schema(client.devices.find_one({"_id": ObjectId(id)}))
 
     return Device(**new_device)
-
 
 # Método para eliminar las comillas de los valores y poder enviarlo a openapi correctamente
 def no_comillas(commands):

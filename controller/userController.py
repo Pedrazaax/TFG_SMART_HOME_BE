@@ -58,7 +58,7 @@ async def deleteUser(id: str):
     found = client.users.find_one_and_delete({"_id": ObjectId(id)})
 
     if not found:
-        raise HTTPException(status_code = 404, detail="No se ha actualizado el usuario")
+        raise HTTPException(status_code = 404, detail="No se ha eliminado el usuario")
 
 def search_user(field: str, key):
     try:

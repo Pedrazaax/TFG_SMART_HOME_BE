@@ -9,6 +9,7 @@ class Command(BaseModel):
 
 class Device(BaseModel):
     id: Optional[str]
+    name: Optional[str]
     idDevice: str
     tipoDevice: str
     key: Optional[str] = None

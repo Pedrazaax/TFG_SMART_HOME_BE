@@ -11,6 +11,7 @@ def commands_schema(commands) -> list:
 
 def device_schema(device) -> dict:
     return {"id": str(device["_id"]),
+            "name":device["name"],
             "idDevice": device["idDevice"],
             "tipoDevice": device["tipoDevice"],
             "key": device["key"],
