@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from controller import userController, auth_usersController, deviceController
+from controller import userController, auth_usersController, deviceController, consumoController
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -23,3 +23,5 @@ app.add_middleware(
 app.include_router(userController.app)
 app.include_router(auth_usersController.app)
 app.include_router(deviceController.app)
+app.include_router(consumoController.app)
+

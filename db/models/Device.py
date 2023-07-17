@@ -1,4 +1,4 @@
-### Thermostat model ###
+### Device model ###
 
 from pydantic import BaseModel
 from typing import List, Union, Optional
@@ -14,3 +14,8 @@ class Device(BaseModel):
     tipoDevice: str
     key: Optional[str] = None
     commands: Optional[List[Command]] = None
+    create_time:Optional[str]
+    update_time:Optional[str]
+    ip:Optional[str]
+    online:Optional[bool]
+    model:Optional[str]

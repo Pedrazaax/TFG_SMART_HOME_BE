@@ -8,6 +8,8 @@ ACCESS_KEY = "85a47365a7c04bc8ba9dfce9823c2038"
 API_ENDPOINT = "https://openapi.tuyaeu.com"
 MQ_ENDPOINT = "wss://mqe.tuyaeu.com:8285/"
 
+API_KEY_NVD = "747ab5fb-9faa-48a1-bf10-5e5325b13648"
+
 flag = False
 
 def get_openapi_instance():
