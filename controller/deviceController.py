@@ -10,6 +10,7 @@ from db.schemas.device import device_schema, devices_schema
 from db.client import client
 from main import OpenApiSingleton
 from bson import json_util
+from service import deviceService
 
 app = APIRouter(prefix="/devices",
                    tags=["Devices"],
@@ -77,7 +78,7 @@ async def updateDevice(device: Device):
     except:
         return{"error": "No se ha actualizado el dispositivo"}
     
-    return search_device("idDevice", device.idDevice)
+    return await deviceService.search_device("idDevice", device.idDevice)
 
 # Información de dispositivo
 @app.get("/info/{idDevice}")
@@ -124,7 +125,7 @@ async def videoStream(idDevice: str):
 async def control_device(device: Device):
     # Convertir la lista de comandos a una lista de diccionarios
     commands = [command.dict() for command in device.commands]
-    no_comillas(commands)
+    await deviceService.no_comillas(commands)
 
     # Filtrar el diccionario que tiene el código que se quiere obtener
     send_command = [command for command in commands if command.get("code") == device.key]
@@ -151,7 +152,7 @@ async def deleteDevice(id: str):
 # Añadir dispositivo
 @app.post("/create",status_code=status.HTTP_201_CREATED, response_model=Device)
 async def add_device(device:Device):
-    if type(search_device("idDevice", device.idDevice)) == Device:
+    if type(await deviceService.search_device("idDevice", device.idDevice)) == Device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El dispositivo ya existe")
     
     device_dict = dict(device)
@@ -161,29 +162,3 @@ async def add_device(device:Device):
     new_device = device_schema(client.devices.find_one({"_id": ObjectId(id)}))
 
     return Device(**new_device)
-
-# Método para eliminar las comillas de los valores y poder enviarlo a openapi correctamente
-def no_comillas(commands):
-    for command in commands:
-        for key, value in command.items():
-            if isinstance(value, str):
-                if value == "True":
-                    command[key] = True
-                elif value == "False":
-                    command[key] = False
-                else:
-                    try:
-                        command[key] = int(value)
-                    except ValueError:
-                        command[key] = value.strip('"')
-
-def search_device(field: str, key):
-    try:
-        device = client.devices.find_one({field: key})
-        if device is None:
-            return None
-        
-        return Device(**device_schema(device))
-    
-    except:
-        raise HTTPException(status_code = 404, detail="No se ha encontrado el usuario")

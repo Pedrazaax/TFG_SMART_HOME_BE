@@ -8,16 +8,17 @@ class Status(BaseModel):
     value: Union[bool, int, str]
 
 class IntervaloPrueba(BaseModel):
-    idIntervaloPrueba: Optional[str]
     time: int
-    consumo: float
+    consumo: Optional[float]
+    current: Optional[List[float]]
+    power: Optional[List[float]]
+    voltage: Optional[List[float]]
     status: List[Status]
 
 class TipoPrueba(BaseModel):
     idTipoPrueba: Optional[str]
     nombre: Optional[str]
     tipoDevice: Optional[str]
-    timeTotal: Optional[int]
     intervaloPrueba: List[IntervaloPrueba]
 
 class PruebaConsumo(BaseModel):
@@ -26,5 +27,6 @@ class PruebaConsumo(BaseModel):
     idDevice: Optional[str]
     prueba: Optional[TipoPrueba]
     idSocket: str
-    timeTotal:Optional[str]
+    timeTotal: Optional[int]
     consumoMedio:Optional[float]
+    dateTime:Optional[str]
