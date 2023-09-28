@@ -39,8 +39,11 @@ async def registerUser(user: User):
             status_code=status.HTTP_404_NOT_FOUND, detail="El usuario ya existe")
 
     # Contraseña segura
+    # Comprobar que tenga mínimo mayuscula, minuscula, número y 8 caracteres
+    # Comprobar que pwd1 y pwd2 coincidan
+    # Encriptar contraseña con bcript (bcript-generator)
     
-    # El servicio crea el usuario
+    # El servicio guarda el usuario en la bbdd con la contraseña encriptada
     try:
         return await userService.register(user)
     except:

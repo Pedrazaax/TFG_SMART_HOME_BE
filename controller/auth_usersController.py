@@ -34,14 +34,14 @@ users_db = {
         "name": "Carlos",
         "email": "carlos@gmail.com",
         "disabled": False,
-        "password": "$2a$12$EwR01rLULLfEtz7kEEVdzewDxDPzYK.0YX3oYTWzQYEsbGa1Ecq7a"
+        "password": "$2a$12$phiqpIioDJP5CTxh8wEJRO8VesG1L3MkgV8ECSJPZl71Rth1c5Nmm"
     },
     "Antonio":{
         "username":"Antonio",
         "name": "Antonio",
         "email": "Antonio@gmail.com",
         "disabled": True,
-        "password": "$2a$12$EwR01rLULLfEtz7kEEVdzewDxDPzYK.0YX3oYTWzQYEsbGa1Ecq7a"
+        "password": "$2a$12$phiqpIioDJP5CTxh8wEJRO8VesG1L3MkgV8ECSJPZl71Rth1c5Nmm"
     }
 }
 
