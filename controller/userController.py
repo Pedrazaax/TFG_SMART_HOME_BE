@@ -4,6 +4,7 @@ from db.schemas.user import user_schema, users_schema
 from db.client import client
 from bson import ObjectId
 from typing import List
+from service import userService
 
 app = APIRouter(prefix="/users",
                    tags=["Users"],
@@ -19,27 +20,31 @@ async def users():
 
 @app.get("/{id}")  # Path
 async def user(id: str):
-    return search_user("_id", ObjectId(id))
+    return userService.search_user("_id", ObjectId(id))
 
 
 @app.get("/")  # Query
 async def user(id: str):
-    return search_user("_id", ObjectId(id))
+    return userService.search_user("_id", ObjectId(id))
     
 @app.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
 async def registerUser(user: User):
-    if type(search_user("email", user.email)) == User:
+    # Email correcto
+    if not (userService.validarEmail(user.email)):
+        raise HTTPException(status_code=404, detail="El formato del email no es correcto")
+
+    # Usuario existe
+    if type(userService.search_user("email", user.email)) == User:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="El usuario ya existe")
 
-    user_dict = dict(user)
-    del user_dict["id"]
-
-    id = client.users.insert_one(user_dict).inserted_id
-
-    new_user = user_schema(client.users.find_one({"_id": id}))
-
-    return User(**new_user)
+    # Contraseña segura
+    
+    # El servicio crea el usuario
+    try:
+        return await userService.register(user)
+    except:
+        raise HTTPException(status_code=404, detail="No se ha podido crear el usuario")
 
 @app.put("/update", response_model=User)
 async def updateUser(user: User):
@@ -51,7 +56,7 @@ async def updateUser(user: User):
     except:
         return {"error": "No se ha actualizado el usuario"}
 
-    return search_user("_id", ObjectId(user.id))
+    return userService.search_user("_id", ObjectId(user.id))
     
 @app.delete("/delete/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def deleteUser(id: str):
@@ -59,14 +64,3 @@ async def deleteUser(id: str):
 
     if not found:
         raise HTTPException(status_code = 404, detail="No se ha eliminado el usuario")
-
-def search_user(field: str, key):
-    try:
-        user = client.users.find_one({field: key})
-        if user is None:
-            return None
-        
-        return User(**user_schema(user))
-    
-    except:
-        raise HTTPException(status_code = 404, detail="No se ha encontrado el usuario")
