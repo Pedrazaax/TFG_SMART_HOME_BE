@@ -5,6 +5,9 @@ from db.client import client
 from bson import ObjectId
 from typing import List
 from service import userService
+from passlib.context import CryptContext
+
+crypt = CryptContext(schemes=["bcrypt"])
 
 app = APIRouter(prefix="/users",
                    tags=["Users"],
@@ -29,21 +32,27 @@ async def user(id: str):
     
 @app.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
 async def registerUser(user: User):
-    print(user)
     # Email correcto
     if not (userService.validarEmail(user.email)):
-        raise HTTPException(status_code=404, detail="El formato del email no es correcto")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El formato del email no es correcto")
 
     # Usuario existe
     if type(userService.search_user("email", user.email)) == User:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="El usuario ya existe")
-
-    # Contraseña segura
-    # Comprobar que tenga mínimo mayuscula, minuscula, número y 8 caracteres
-    # Comprobar que pwd1 y pwd2 coincidan
-    # Encriptar contraseña con bcript (bcript-generator)
     
+    # Comprobar que pwd1 y pwd2 coincidan
+    if (user.password != user.pwd2):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Las contraseñas no coinciden")
+
+    # Contraseña segura - Comprobar que tenga mínimo mayuscula, minuscula, número y 8 caracteres
+    if len(user.password) < 8 or not any(char.isupper() for char in user.password) or not any(char.islower() for char in user.password):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La contraseña debe contener al menos 8 caracteres, mayúsculas y minúsculas")
+
+    # Encriptar contraseña con bcript (bcript-generator)
+    user.password = crypt.hash(user.password)
+    user.pwd2 = user.password
+
     # El servicio guarda el usuario en la bbdd con la contraseña encriptada
     try:
         return await userService.register(user)

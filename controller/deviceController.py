@@ -101,8 +101,7 @@ async def state_device(idDevice: str):
 @app.get("/statusDevices/")
 async def state_devices(idDevices):
     respuesta = openapi.get('/v1.0/iot-03/devices/status?device_ids={}'.format(idDevices))
-
-    print(respuesta)
+    
     return respuesta
 
 # Video Stream URL

@@ -3,7 +3,7 @@
 from db.client import client
 from db.models.user import User
 from db.schemas.user import user_schema
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 async def register(user: User, response_model=User):
     user_dict = dict(user)
@@ -26,7 +26,8 @@ def search_user(field: str, key):
         return User(**user_schema(user))
     
     except:
-        raise HTTPException(status_code = 404, detail="No se ha encontrado el usuario")
+        print("Usuario no existe")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se ha encontrado el usuario")
     
 def validarEmail(email: str):
     try:
