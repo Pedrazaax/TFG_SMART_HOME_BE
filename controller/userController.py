@@ -29,6 +29,7 @@ async def user(id: str):
     
 @app.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
 async def registerUser(user: User):
+    print(user)
     # Email correcto
     if not (userService.validarEmail(user.email)):
         raise HTTPException(status_code=404, detail="El formato del email no es correcto")
