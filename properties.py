@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 from tuya_connector import TuyaOpenAPI
+from db.client import client
 
 ACCESS_ID = "q5r8cmmu7epcxttt7vgf"
 ACCESS_KEY = "85a47365a7c04bc8ba9dfce9823c2038"

@@ -25,8 +25,8 @@ def search_user(field: str, key):
         
         return User(**user_schema(user))
     
-    except:
-        print("Usuario no existe")
+    except Exception as e:
+        print("Error (userService): ", str(e))
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se ha encontrado el usuario")
     
 def validarEmail(email: str):

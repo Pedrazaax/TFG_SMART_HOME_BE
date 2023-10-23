@@ -1,7 +1,9 @@
 ### Clase Controller de consumo ###
 
 from typing import List
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
+from controller.auth_usersController import current_user
+from db.models.user import User
 from db.models.PruebaConsumo import PruebaConsumo, TipoPrueba 
 from db.schemas.pruebaConsumo import pruebasConsumo_schema, tipoPruebas_schema
 from db.client import client
@@ -13,7 +15,11 @@ app = APIRouter(prefix="/consumo",
 
 
 @app.get("/", response_model=List[PruebaConsumo])
-async def pruebasConsumo():
+async def pruebasConsumo(user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
     pruebasConsumo = pruebasConsumo_schema(client.PruebasConsumo.find())
     if len(pruebasConsumo) == 0:
          raise HTTPException(status_code=204, detail="La lista está vacía")
@@ -21,7 +27,11 @@ async def pruebasConsumo():
     return pruebasConsumo
 
 @app.get("/getPruebas", response_model=List[TipoPrueba])
-async def getTipoPrubas():
+async def getTipoPrubas(user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
     tipoPruebas = tipoPruebas_schema(client.TipoPrueba.find())
     if len(tipoPruebas) == 0:
          raise HTTPException(status_code=204, detail="La lista está vacía")
@@ -30,7 +40,7 @@ async def getTipoPrubas():
 
 # Hacer una prueba de consumo
 @app.post("/create", response_model=PruebaConsumo, status_code=status.HTTP_201_CREATED)
-async def createPConsumo(pConsumo: PruebaConsumo):
+async def createPConsumo(pConsumo: PruebaConsumo, user: User = Depends(current_user)):
 
     """
     try:
@@ -39,13 +49,19 @@ async def createPConsumo(pConsumo: PruebaConsumo):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     """
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
     
     new_pConsumo = await consumoService.createPConsumo(pConsumo)
     return PruebaConsumo(**new_pConsumo)
 
 # Crear un nuevo tipo de prueba
 @app.post("/createTipoPrueba", response_model=TipoPrueba, status_code=status.HTTP_201_CREATED)
-async def createTipoPrueba(tPrueba:TipoPrueba):
+async def createTipoPrueba(tPrueba:TipoPrueba, user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
 
     new_tPrueba = await consumoService.createTipoPrueba(tPrueba)
     return TipoPrueba(**new_tPrueba)
@@ -59,7 +75,10 @@ async def createTipoPrueba(tPrueba:TipoPrueba):
 # Eliminar prueba de consumo
   
 @app.delete(("/delete/{id}"),status_code=status.HTTP_204_NO_CONTENT)
-async def deletePConsumo(id: str):
+async def deletePConsumo(id: str, user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
 
     jsoID = {
         "idDevice": id

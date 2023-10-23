@@ -3,7 +3,9 @@
 
 import json
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
+from controller.auth_usersController import current_user
+from db.models.user import User
 from typing import List
 from db.models.Device import Device, Command
 from db.schemas.device import device_schema, devices_schema
@@ -20,7 +22,11 @@ openapi = OpenApiSingleton.get_instance()
 
 # Ver dispositivos
 @app.get("/", response_model=List[Device])
-async def devices():
+async def devices(user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
     devices = devices_schema(client.devices.find())
     if len(devices) == 0:
         raise HTTPException(status_code= 204, detail="La lista está vacía")
@@ -33,7 +39,11 @@ def serialize_device(device):
 
 # Lista de todos los dispositivos TUYA
 @app.get("/getList")
-async def list_devices():
+async def list_devices(user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
     try:
         respuesta = openapi.get('/v1.3/iot-03/devices')
         devices = respuesta['result']['list']
@@ -70,7 +80,11 @@ async def list_devices():
     
 # Actualizar dispositivo
 @app.put("/updateDevice" .format(Device))
-async def updateDevice(device: Device):
+async def updateDevice(device: Device, user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
     device_dict = dict(device)
     
     try:
@@ -82,15 +96,22 @@ async def updateDevice(device: Device):
 
 # Información de dispositivo
 @app.get("/info/{idDevice}")
-async def info_device(idDevice: str):
- 
+async def info_device(idDevice: str, user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
     respuesta = openapi.get('/v1.0/iot-03/devices/{}'.format(idDevice))
 
     return respuesta
 
 # Estado del dispositivo
 @app.get("/status/{idDevice}", response_model=List[Command])
-async def state_device(idDevice: str):
+async def state_device(idDevice: str, user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
     respuesta = openapi.get('/v1.0/iot-03/devices/{}/status'.format(idDevice))
 
     #respuesta["result"] --> commands del idDevice Reemplazar en la bbdd Device
@@ -99,15 +120,22 @@ async def state_device(idDevice: str):
 
 # Estado de varios dispositivos
 @app.get("/statusDevices/")
-async def state_devices(idDevices):
+async def state_devices(idDevices, user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
     respuesta = openapi.get('/v1.0/iot-03/devices/status?device_ids={}'.format(idDevices))
     
     return respuesta
 
 # Video Stream URL
 @app.get("/video/{idDevice}")
-async def videoStream(idDevice: str):
-
+async def videoStream(idDevice: str, user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
     jsonType = {"type":"hls"}
     respuesta = openapi.post('/v1.0/devices/{}/stream/actions/allocate'.format(idDevice), jsonType)
 
@@ -122,7 +150,11 @@ async def videoStream(idDevice: str):
 
 # Control del dispositivo
 @app.post("/control", response_model=Device)
-async def control_device(device: Device):
+async def control_device(device: Device, user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
     # Convertir la lista de comandos a una lista de diccionarios
     commands = [command.dict() for command in device.commands]
     await deviceService.no_comillas(commands)
@@ -138,7 +170,10 @@ async def control_device(device: Device):
 
 # Eliminar dispositivo
 @app.delete(("/delete/{id}"),status_code=status.HTTP_204_NO_CONTENT)
-async def deleteDevice(id: str):
+async def deleteDevice(id: str, user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
 
     jsoID = {
         "idDevice": id
@@ -151,7 +186,11 @@ async def deleteDevice(id: str):
 
 # Añadir dispositivo
 @app.post("/create",status_code=status.HTTP_201_CREATED, response_model=Device)
-async def add_device(device:Device):
+async def add_device(device:Device, user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
     if type(await deviceService.search_device("idDevice", device.idDevice)) == Device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El dispositivo ya existe")
     
