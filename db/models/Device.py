@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel
 from typing import List, Union, Optional
+from db.models.Room import Room
 
 class Command(BaseModel):
     code: str
@@ -19,3 +20,4 @@ class Device(BaseModel):
     ip:Optional[str]
     online:Optional[bool]
     model:Optional[str]
+    room:Optional[Room]

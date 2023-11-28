@@ -1,5 +1,12 @@
 ### Device schema ###
 
+def room_schema(room):
+    return {
+        "id": str(room["_id"]),
+        "name": room["name"]
+    }
+
+
 def command_schema(command) -> dict:
     return {"code": command.code,
             "value": command.value}
@@ -23,6 +30,7 @@ def device_schema(device) -> dict:
         "ip": device["ip"],
         "online": device["online"],
         "model": device["model"],
+        "room": room_schema(device["room"])
     }
 
 def devices_schema(devices) -> list:

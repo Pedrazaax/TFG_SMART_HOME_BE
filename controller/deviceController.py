@@ -10,6 +10,7 @@ from typing import List
 from db.models.Device import Device, Command
 from db.schemas.device import device_schema, devices_schema
 from db.client import client
+from db.schemas.room import room_schema
 from main import OpenApiSingleton
 from bson import json_util
 from service import deviceService
@@ -43,6 +44,8 @@ async def list_devices(user: User = Depends(current_user)):
     # Verifica si el usuario está autenticado a través del token JWT en la cabecera
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+
+    room = client.rooms.find_one({"name": "None"})
     
     try:
         respuesta = openapi.get('/v1.3/iot-03/devices')
@@ -58,11 +61,12 @@ async def list_devices(user: User = Depends(current_user)):
                 'update_time': device['update_time'],
                 'ip': device['ip'],
                 'online': device['online'],
-                'model': device['model'],
+                'model': device['model']
             }
 
             existing_device = client.devices.find_one({'idDevice': device['id']})
             if existing_device is None:
+                device_dict['room'] = room
                 client.devices.insert_one(device_dict)
             else:
                 update_dict = {}
@@ -77,22 +81,22 @@ async def list_devices(user: User = Depends(current_user)):
         return {"success": True, "devices": serialized_devices}
     except Exception as e:
         return {"success": False, "error": str(e)}
-    
-# Actualizar dispositivo
-@app.put("/updateDevice" .format(Device))
-async def updateDevice(device: Device, user: User = Depends(current_user)):
-    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
-    
-    device_dict = dict(device)
-    
-    try:
-        client.devices.find_one_and_replace({"idDevice": device.idDevice}, device_dict)
-    except:
-        return{"error": "No se ha actualizado el dispositivo"}
-    
-    return await deviceService.search_device("idDevice", device.idDevice)
+        
+    # Actualizar dispositivo
+    @app.put("/updateDevice" .format(Device))
+    async def updateDevice(device: Device, user: User = Depends(current_user)):
+        # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+        if not user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+        
+        device_dict = dict(device)
+        
+        try:
+            client.devices.find_one_and_replace({"idDevice": device.idDevice}, device_dict)
+        except:
+            return{"error": "No se ha actualizado el dispositivo"}
+        
+        return await deviceService.search_device("idDevice", device.idDevice)
 
 # Información de dispositivo
 @app.get("/info/{idDevice}")

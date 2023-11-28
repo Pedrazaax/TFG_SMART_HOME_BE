@@ -10,7 +10,7 @@ from db.client import client
 from service import userService
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_DURATION = 1
+ACCESS_TOKEN_DURATION = 999
 SECRET = "256576dfohbjpkwmsdga8987098'09òkdfsagsa24142jh1k"
 
 app = APIRouter(prefix="/auth",

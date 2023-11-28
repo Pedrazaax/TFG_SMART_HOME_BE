@@ -1,5 +1,6 @@
 ### Clase Service de consumo ###
 
+from fastapi import HTTPException, status
 from db.client import client
 from db.models.PruebaConsumo import TipoPrueba
 from db.schemas.pruebaConsumo import pruebaConsumo_schema, tipoPrueba_schema
@@ -114,3 +115,12 @@ def tipoPrueba_to_dict(tPrueba: TipoPrueba) -> dict:
     tipo_dict = tPrueba.dict()
     tipo_dict["intervaloPrueba"] = [i.dict() for i in tPrueba.intervaloPrueba]
     return tipo_dict
+
+async def deletePConsumo(id: str):
+    try:
+        print("ID: ", id)
+        print("ID object: ", object(id))
+        client.PruebasConsumo.delete_one({"idTipoPrueba": id})
+    except Exception as e:
+        print("Error (consumoService): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

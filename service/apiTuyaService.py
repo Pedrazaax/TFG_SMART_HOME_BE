@@ -23,6 +23,7 @@ async def get_keysAPI(username: str):
     
 async def registerKeys(keys: KeysAPI, response_model=KeysAPI):
     keys_dict = dict(keys)
+    
     del keys_dict["id"]
 
     try:

@@ -6,16 +6,18 @@ from db.schemas.user import user_schema
 from fastapi import HTTPException, status
 
 async def register(user: User, response_model=User):
-    user_dict = dict(user)
-    del user_dict["id"]
-
     try:
+        user_dict = dict(user)
+        del user_dict["id"]
+
+    
         id = client.users.insert_one(user_dict).inserted_id
         new_user = user_schema(client.users.find_one({"_id": id}))
-    except:
-        raise HTTPException(status_code=404, detail="No se ha podido crear el usuario")
     
-    return User(**new_user)
+        return User(**new_user)
+    except Exception as e:
+        print("Error (userService): ", str(e))
+        raise HTTPException(status_code=404, detail="No se ha podido crear el usuario")
 
 def search_user(field: str, key):
     try:
