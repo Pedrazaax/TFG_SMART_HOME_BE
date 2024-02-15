@@ -27,6 +27,14 @@ async def addRoom(room: Room):
         room_dict = dict(room)
         del room_dict["id"]
 
+        # Comprobar que no existe una habitación con el mismo nombre
+        if client.rooms.find_one({"name": room_dict["name"]}):
+            raise HTTPException(status_code = 400, detail="Ya existe una habitación con ese nombre")
+        
+        # Comprobar que el nombre no está vacío
+        if room_dict["name"] == "":
+            raise HTTPException(status_code = 400, detail="El nombre no puede estar vacío")
+        
         id = client.rooms.insert_one(room_dict).inserted_id
         new_room = room_schema(client.rooms.find_one({"_id": id}))
         

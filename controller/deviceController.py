@@ -50,6 +50,7 @@ async def list_devices(user: User = Depends(current_user)):
     try:
         respuesta = openapi.get('/v1.3/iot-03/devices')
         devices = respuesta['result']['list']
+        
         for device in devices:
             device_dict = {
                 'name': device['name'],
@@ -82,21 +83,21 @@ async def list_devices(user: User = Depends(current_user)):
     except Exception as e:
         return {"success": False, "error": str(e)}
         
-    # Actualizar dispositivo
-    @app.put("/updateDevice" .format(Device))
-    async def updateDevice(device: Device, user: User = Depends(current_user)):
-        # Verifica si el usuario está autenticado a través del token JWT en la cabecera
-        if not user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
-        
-        device_dict = dict(device)
-        
-        try:
-            client.devices.find_one_and_replace({"idDevice": device.idDevice}, device_dict)
-        except:
-            return{"error": "No se ha actualizado el dispositivo"}
-        
-        return await deviceService.search_device("idDevice", device.idDevice)
+# Actualizar dispositivo
+@app.put("/updateDevice" .format(Device))
+async def updateDevice(device: Device, user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
+    device_dict = dict(device)
+    
+    try:
+        client.devices.find_one_and_replace({"idDevice": device.idDevice}, device_dict)
+    except:
+        return{"error": "No se ha actualizado el dispositivo"}
+    
+    return await deviceService.search_device("idDevice", device.idDevice)
 
 # Información de dispositivo
 @app.get("/info/{idDevice}")
