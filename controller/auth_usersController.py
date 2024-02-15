@@ -4,9 +4,13 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
+from db.models.user import User
+from db.schemas.user import user_schema, users_schema
+from db.client import client
+from service import userService
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_DURATION = 1
+ACCESS_TOKEN_DURATION = 999
 SECRET = "256576dfohbjpkwmsdga8987098'09òkdfsagsa24142jh1k"
 
 app = APIRouter(prefix="/auth",
@@ -16,38 +20,6 @@ app = APIRouter(prefix="/auth",
 oauth2 = OAuth2PasswordBearer(tokenUrl="login")
 
 crypt = CryptContext(schemes=["bcrypt"])
-
-#Entidad User
-class User(BaseModel):
-    username: str
-    name: str
-    email: str
-    disabled: bool
-
-#Entidad UserDB
-class UserDB(User):
-    password: str
-
-users_db = {
-    "Carlos":{
-        "username":"Carlos",
-        "name": "Carlos",
-        "email": "carlos@gmail.com",
-        "disabled": False,
-        "password": "$2a$12$EwR01rLULLfEtz7kEEVdzewDxDPzYK.0YX3oYTWzQYEsbGa1Ecq7a"
-    },
-    "Antonio":{
-        "username":"Antonio",
-        "name": "Antonio",
-        "email": "Antonio@gmail.com",
-        "disabled": True,
-        "password": "$2a$12$EwR01rLULLfEtz7kEEVdzewDxDPzYK.0YX3oYTWzQYEsbGa1Ecq7a"
-    }
-}
-
-def search_user_db(username: str):
-    if username in users_db:
-        return UserDB(**users_db[username])
     
 async def auth_user(token: str = Depends(oauth2)):
 
@@ -63,7 +35,7 @@ async def auth_user(token: str = Depends(oauth2)):
     except JWTError:
         raise exception
 
-    return search_user_db(username)
+    return userService.search_user("username", username)
 
 async def current_user(user: User = Depends(auth_user)):
     if user.disabled:
@@ -74,18 +46,19 @@ async def current_user(user: User = Depends(auth_user)):
 
 @app.post("/login")
 async def login(form: OAuth2PasswordRequestForm = Depends()):
-    user_db = users_db.get(form.username)
+    user_db = userService.search_user("username", form.username)
 
     if not user_db:
-        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail="El usuario no es correcto")
-    
-    user = search_user_db(form.username)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El usuario no existe")
 
-    if not crypt.verify(form.password, user.password):
+    if user_db.disabled:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario deshabilitado")
+
+    if not crypt.verify(form.password, user_db.password):
         raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail="La contraseña no es correcta")
 
     access_token = {
-                    "sub": user.username,
+                    "sub": user_db.username,
                     "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_DURATION)
                     }
 
