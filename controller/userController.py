@@ -48,10 +48,7 @@ async def user(id: str, user: User = Depends(current_user)):
     return userService.search_user("_id", ObjectId(id))
     
 @app.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
-async def registerUser(user: User, userReg: User = Depends(current_user)):
-    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
-    if not userReg:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+async def registerUser(user: User):
     
     # Email correcto
     if not (userService.validarEmail(user.email)):
