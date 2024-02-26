@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from controller import userController, auth_usersController, deviceController, consumoController, apiTuyaController, roomController
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+app = FastAPI(docs_url=None)
 
 # Iniciar servidor en local: python -m uvicorn app:app
 # Documentación Swagger: /docs
