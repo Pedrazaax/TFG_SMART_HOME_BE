@@ -5,7 +5,7 @@ from db.client import client
 from db.models.PruebaConsumo import TipoPrueba
 from db.schemas.pruebaConsumo import pruebaConsumo_schema, tipoPrueba_schema
 from asyncio import sleep
-from typing import List
+from typing import List,Tuple
 from main import OpenApiSingleton
 from service import deviceService
 import time
@@ -13,7 +13,7 @@ from datetime import datetime
 
 openapi = OpenApiSingleton.get_instance()
 
-async def calculate_average_consumption(device_id: str, duration: int) -> tuple[float, List[float], List[float], List[float]]:
+async def calculate_average_consumption(device_id: str, duration: int) -> Tuple[float, List[float], List[float], List[float]]:
     kwh = 0
     total_current = 0
     total_power = 0
