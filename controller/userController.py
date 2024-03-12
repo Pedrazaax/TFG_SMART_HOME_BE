@@ -48,11 +48,10 @@ async def user(id: str, user: User = Depends(current_user)):
     return userService.search_user("_id", ObjectId(id))
     
 @app.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
-async def registerUser(user: User, userReg: User = Depends(current_user)):
-    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
-    if not userReg:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+async def registerUser(user: User):
     
+    print("user: ", user)
+
     # Email correcto
     if not (userService.validarEmail(user.email)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El formato del email no es correcto")
@@ -77,8 +76,9 @@ async def registerUser(user: User, userReg: User = Depends(current_user)):
     # El servicio guarda el usuario en la bbdd con la contraseña encriptada
     try:
         return await userService.register(user)
-    except:
-        raise HTTPException(status_code=404, detail="No se ha podido crear el usuario")
+    except Exception as e:
+        print("Error (userController): ", str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="No se ha registrado el usuario") from e
 
 @app.put("/update", response_model=User)
 async def updateUser(user: User, userReg: User = Depends(current_user)):

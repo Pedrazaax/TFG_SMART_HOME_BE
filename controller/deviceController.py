@@ -10,7 +10,6 @@ from typing import List
 from db.models.Device import Device, Command
 from db.schemas.device import device_schema, devices_schema
 from db.client import client
-from db.schemas.room import room_schema
 from main import OpenApiSingleton
 from bson import json_util
 from service import deviceService
@@ -84,7 +83,7 @@ async def list_devices(user: User = Depends(current_user)):
         return {"success": False, "error": str(e)}
         
 # Actualizar dispositivo
-@app.put("/updateDevice" .format(Device))
+@app.put("/updateDevice")
 async def updateDevice(device: Device, user: User = Depends(current_user)):
     # Verifica si el usuario está autenticado a través del token JWT en la cabecera
     if not user:
@@ -94,8 +93,8 @@ async def updateDevice(device: Device, user: User = Depends(current_user)):
     
     try:
         client.devices.find_one_and_replace({"idDevice": device.idDevice}, device_dict)
-    except:
-        return{"error": "No se ha actualizado el dispositivo"}
+    except Exception as e:
+        return{"error": "No se ha actualizado el dispositivo", "exception": str(e)}
     
     return await deviceService.search_device("idDevice", device.idDevice)
 
