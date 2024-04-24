@@ -1,12 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from db.models.user import User
-from db.schemas.user import user_schema, users_schema
-from db.client import client
 from service import userService
 
 ALGORITHM = "HS256"

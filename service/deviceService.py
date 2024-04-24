@@ -29,5 +29,5 @@ async def search_device(field: str, key):
         
         return Device(**device_schema(device))
     
-    except:
-        raise HTTPException(status_code = 404, detail="No se ha encontrado el usuario")
+    except Exception as e:
+        raise HTTPException(status_code = 404, detail="No se ha encontrado el usuario" + str(e))

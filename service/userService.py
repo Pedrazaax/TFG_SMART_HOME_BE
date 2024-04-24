@@ -10,6 +10,8 @@ async def register(user: User, response_model=User):
         user_dict = dict(user)
         del user_dict["id"]
 
+        # Añadir homeAssistant null
+        user_dict["homeAssistant"] = None
     
         id = client.users.insert_one(user_dict).inserted_id
         new_user = user_schema(client.users.find_one({"_id": id}))
