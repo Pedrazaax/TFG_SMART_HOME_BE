@@ -3,9 +3,8 @@
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from controller.auth_usersController import current_user
-from typing import List
 from db.models.user import User
-from service import localDeviceService
+from service import localDeviceService, userService
 
 app = APIRouter(prefix="/localDevices",
                      tags=["Local Devices"],
@@ -13,32 +12,52 @@ app = APIRouter(prefix="/localDevices",
 
 # Guardar token de autenticación y dominio proveniente del cliente
 @app.post("/saveHA")
-async def save_token(token: str, dominio: str, user: User = Depends(current_user)):
+async def save_token(data: dict, user: User = Depends(current_user)):
     # Verifica si el usuario está autenticado a través del token JWT en la cabecera
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
     
-    # Comprueba que el token no esté vacio
-    if not token:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token vacío")
+    # Comprueba que los datos no estén vacíos
+    if not data:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Datos vacíos")
+    
+    # Obtiene el token y el dominio del JSON
+    token = data.get('token')
+    dominio = data.get('dominio')
+    
+    # Comprueba que el token y el dominio existan
+    if not token or not dominio:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token o dominio faltante")
     
     # Comprueba que el token sea válido
     if len(token) < 10:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token inválido")
     
-    # Comprueba que el dominio no esté vacio
+    # Comprueba que el dominio no esté vacío
     if not dominio:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Dominio vacío")
     
     # Comprueba que el dominio sea válido
-    if not localDeviceService.validate_domain(dominio):
+    if not await localDeviceService.validate_domain(dominio):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Dominio inválido")
 
     try:
         await localDeviceService.save_homeAssistant(token, dominio, user)
-        print("Token guardado correctamente")
-        print("Token: ", token)
-        return user.tokenHA
+        return user.homeAssistant
+    except Exception as e:
+        print("Error (localDeviceController): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+# Devolver valor de homeAssistant
+@app.get("/getHA")
+async def get_ha(user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
+    try:
+        print("Usuario: ", user)
+        return user.homeAssistant
     except Exception as e:
         print("Error (localDeviceController): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

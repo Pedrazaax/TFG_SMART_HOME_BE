@@ -14,4 +14,4 @@ class User(BaseModel):
     email: str
     password: str
     pwd2: str
-    homeAssistant: Optional[Tuple[HomeAssistant]]
+    homeAssistant: Optional[HomeAssistant]

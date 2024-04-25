@@ -2,6 +2,8 @@
 
 from db.models.user import User
 from fastapi import HTTPException, status
+from db.client import client
+from bson import ObjectId
 import httpx
 
 async def save_homeAssistant(token: str, dominio: str, user: User):
@@ -16,7 +18,7 @@ async def save_homeAssistant(token: str, dominio: str, user: User):
         else:
             # Guarda la nueva tupla guardando el token y dominio
             user.homeAssistant = homeAssistant
-            user.save()
+            client.users.update_one({"_id": ObjectId(user.id)}, {"$set": {"homeAssistant": user.homeAssistant}})
 
     except Exception as e:
         print("Error (localDeviceService): ", e)
@@ -28,11 +30,15 @@ async def validate_domain(dominio: str):
         flag: bool = True
 
         # Comprueba que empiece por http:// o https://
-        if not dominio.startswith("http://") or not dominio.startswith("https://"):
+        if not dominio.startswith("http://") and not dominio.startswith("https://"):
+            print('Dominio', dominio)
+            print("Dominio no empieza por http:// o https://")
             flag = False
             
         # Comprueba que después de http:// o https:// haya algún carácter, luego un punto y de nuevo caracter
         if not dominio[7:].split(".")[0] or not dominio[7:].split(".")[1]:
+            print('Dominio', dominio)
+            print("Dominio no tiene caracteres después de http:// o https://")
             flag = False
 
         return flag
