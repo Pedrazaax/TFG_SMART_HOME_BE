@@ -4,7 +4,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from controller.auth_usersController import current_user
 from db.models.user import User
-from service import localDeviceService, userService
+from service import localDeviceService
 
 app = APIRouter(prefix="/localDevices",
                      tags=["Local Devices"],
@@ -38,7 +38,7 @@ async def save_token(data: dict, user: User = Depends(current_user)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Dominio vacío")
     
     # Comprueba que el dominio sea válido
-    if not await localDeviceService.validate_domain(dominio):
+    if not await localDeviceService.validate_domain(dominio, user):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Dominio inválido")
 
     try:
@@ -51,6 +51,7 @@ async def save_token(data: dict, user: User = Depends(current_user)):
 # Devolver valor de homeAssistant
 @app.get("/getHA")
 async def get_ha(user: User = Depends(current_user)):
+    print("User: ", user)
     # Verifica si el usuario está autenticado a través del token JWT en la cabecera
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
@@ -63,17 +64,19 @@ async def get_ha(user: User = Depends(current_user)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
 # Listar tipo de pruebas / scripts
-@app.get("/listScripts")
-async def list_scripts(user: User = Depends(current_user)):
+@app.get("/getScripts")
+async def getScripts(user: User = Depends(current_user)):
     # Verifica si el usuario está autenticado a través del token JWT en la cabecera
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
     
     # Obtención del token de la base de datos
-    token = user.homeAssistant[0].tokenHA
+    token = user.homeAssistant.tokenHA
+    print("Token: ", token)
 
     # Obtención del dominio de la base de datos
-    dominio = user.homeAssistant[0].dominio
+    dominio = user.homeAssistant.dominio
+    print("Dominio: ", dominio)
 
     # Verifica si el token está vacío
     if not token:

@@ -24,7 +24,7 @@ async def save_homeAssistant(token: str, dominio: str, user: User):
         print("Error (localDeviceService): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
-async def validate_domain(dominio: str):
+async def validate_domain(dominio: str, user: User):
     try:
         # Declaración de flag de tipo booleano
         flag: bool = True
@@ -41,6 +41,11 @@ async def validate_domain(dominio: str):
             print("Dominio no tiene caracteres después de http:// o https://")
             flag = False
 
+        # Si el dominio acaba en / se le quita y se guarda el nuevo dominio
+        if dominio.endswith("/"):
+            dominio = dominio[:-1]
+            client.users.update_one({"_id": ObjectId(user.id)}, {"$set": {"homeAssistant.dominio": dominio}})
+
         return flag
 
     except Exception as e:
@@ -56,6 +61,8 @@ async def list_scripts(token: str, dominio: str):
             "Content-Type": "application/json"
         }
 
+        print("Headers: ", headers)
+
         # URL de la petición GET
         url = f"{dominio}/api/states"
 
@@ -64,11 +71,7 @@ async def list_scripts(token: str, dominio: str):
             response = await client.get(url, headers=headers)
             response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
             responseJson = response.json()  # Parsea la respuesta JSON a un objeto Python
-            scripts = []
-            for item in responseJson:
-                if item.get("entity_id") == "script":
-                    scripts.append(item)
-            return scripts
+            return responseJson
         
     except Exception as e:
         print("Error (localDeviceService): ", e)
