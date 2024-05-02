@@ -165,6 +165,7 @@ async def control_device(device: Device, user: User = Depends(current_user)):
 
     # Filtrar el diccionario que tiene el código que se quiere obtener
     send_command = [command for command in commands if command.get("code") == device.key]
+    print(send_command)
 
     openapi.post('/v1.0/iot-03/devices/{}/commands'.format(device.idDevice), {'commands': send_command})
 

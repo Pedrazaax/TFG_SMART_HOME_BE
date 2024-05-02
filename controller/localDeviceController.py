@@ -55,7 +55,7 @@ async def get_ha(user: User = Depends(current_user)):
     # Verifica si el usuario está autenticado a través del token JWT en la cabecera
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
-    
+            
     try:
         print("Usuario: ", user)
         return user.homeAssistant
@@ -63,8 +63,8 @@ async def get_ha(user: User = Depends(current_user)):
         print("Error (localDeviceController): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
-# Listar tipo de pruebas / scripts
-@app.get("/getScripts")
+# Listar todos los scripts de Home Assistant y dispositivos locales
+@app.get("/")
 async def getScripts(user: User = Depends(current_user)):
     # Verifica si el usuario está autenticado a través del token JWT en la cabecera
     if not user:
@@ -72,11 +72,9 @@ async def getScripts(user: User = Depends(current_user)):
     
     # Obtención del token de la base de datos
     token = user.homeAssistant.tokenHA
-    print("Token: ", token)
 
     # Obtención del dominio de la base de datos
     dominio = user.homeAssistant.dominio
-    print("Dominio: ", dominio)
 
     # Verifica si el token está vacío
     if not token:
@@ -87,33 +85,8 @@ async def getScripts(user: User = Depends(current_user)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dominio no encontrado")
     
     try:
-        scripts = await localDeviceService.list_scripts(token, dominio)
-        print("Lista de scripts")
-        print("Scripts: ", scripts)
+        scripts = await localDeviceService.listAll(token, dominio)
         return scripts
-    except Exception as e:
-        print("Error (localDeviceController): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-# Lista local devices Home Assistant
-@app.get("/")
-async def local_devices(user: User = Depends(current_user)):
-    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
-    
-    # Trae el token de la base de datos
-    token = user.tokenHA
-
-    # Verifica si el token está vacío
-    if not token:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Token no encontrado")
-    
-    try:
-        print("Lista de dispositivos locales")
-        print("Dispositivos: ", user.local_devices)
-        # Devuelve la lista de local devices
-        return user.local_devices
     except Exception as e:
         print("Error (localDeviceController): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

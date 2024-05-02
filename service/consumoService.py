@@ -1,7 +1,7 @@
 ### Clase Service de consumo ###
 
 from fastapi import HTTPException, status
-from db.client import client
+from db.client import client, clientConsumoLocal
 from db.models.PruebaConsumo import TipoPrueba
 from db.schemas.pruebaConsumo import pruebaConsumo_schema, tipoPrueba_schema
 from asyncio import sleep
@@ -96,8 +96,8 @@ async def createPConsumo(pConsumo: pruebaConsumo_schema):
 
     del pConsumo_dict["idPrueba"]
 
-    id = client.PruebasConsumo.insert_one(pConsumo_dict).inserted_id
-    new_pConsumo = pruebaConsumo_schema(client.PruebasConsumo.find_one({"_id": id}))
+    id = clientConsumoLocal.PruebasConsumo.insert_one(pConsumo_dict).inserted_id
+    new_pConsumo = pruebaConsumo_schema(clientConsumoLocal.PruebasConsumo.find_one({"_id": id}))
 
     return new_pConsumo
     

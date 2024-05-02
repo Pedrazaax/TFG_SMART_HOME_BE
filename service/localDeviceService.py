@@ -52,16 +52,15 @@ async def validate_domain(dominio: str, user: User):
         print("Error (localDeviceService): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
-async def list_scripts(token: str, dominio: str):
+async def listAll(token: str, dominio: str):
     try:
         print("Listando scripts")
+        
         # Inicialización de HTTP Headers con token bearer
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         }
-
-        print("Headers: ", headers)
 
         # URL de la petición GET
         url = f"{dominio}/api/states"
