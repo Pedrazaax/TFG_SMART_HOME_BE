@@ -75,3 +75,14 @@ async def listAll(token: str, dominio: str):
     except Exception as e:
         print("Error (localDeviceService): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+async def save_tprueba(data: dict):
+    try:
+        print("Guardando tipo de prueba")
+        # Obtiene el nombre, categoría, dispositivo y script del JSON
+
+        
+
+    except Exception as e:
+        print("Error (localDeviceService): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
