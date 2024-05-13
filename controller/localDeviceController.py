@@ -65,6 +65,7 @@ async def get_ha(user: User = Depends(current_user)):
 # Guardar tipo de prueba
 @app.post("/saveTPrueba")
 async def save_tprueba(data: dict, user: User = Depends(current_user)):
+
     # Verifica si el usuario está autenticado a través del token JWT en la cabecera
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
@@ -74,19 +75,14 @@ async def save_tprueba(data: dict, user: User = Depends(current_user)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Datos vacíos")
     
     # Comprueba que el nombre, categoría, dispositivo y script existan
-    if not data.get('nombre') or not data.get('categoria') or not data.get('dispositivo') or not data.get('script'):
+    if not data.get('name') or not data.get('category') or not data.get('device') or not data.get('intervalos'):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Faltan datos")
     
     try:
-        await localDeviceService.save_tprueba(data)
-        return user.homeAssistant
+        return await localDeviceService.save_tprueba(data)
     except Exception as e:
         print("Error (localDeviceController): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    
-
-
-    return True
     
     
 # Listar todos los scripts de Home Assistant y dispositivos locales

@@ -21,6 +21,16 @@ class TipoPrueba(BaseModel):
     tipoDevice: Optional[str]
     intervaloPrueba: List[IntervaloPrueba]
 
+class Intervalos(BaseModel):
+    time: int
+    script: Optional[str]
+
+class TipoPruebaLocal(BaseModel):
+    name: Optional[str]
+    category: Optional[str]
+    device: Optional[str]
+    intervalos: List[Intervalos]
+
 class PruebaConsumo(BaseModel):
     idPrueba: Optional[str]
     tipoDevice: Optional[str]

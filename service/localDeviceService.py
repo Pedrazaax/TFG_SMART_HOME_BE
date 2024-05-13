@@ -1,6 +1,7 @@
 ### Clase Service de dispositivos locales ###
 
 from db.models.user import User
+from db.models.PruebaConsumo import TipoPruebaLocal
 from fastapi import HTTPException, status
 from db.client import client
 from bson import ObjectId
@@ -79,10 +80,26 @@ async def listAll(token: str, dominio: str):
 async def save_tprueba(data: dict):
     try:
         print("Guardando tipo de prueba")
-        # Obtiene el nombre, categoría, dispositivo y script del JSON
 
+        # Obtiene los datos del JSON
+        name = data.get('name')
+        category = data.get('category')
+        device = data.get('device')
+        intervalos = data.get('intervalos')
+
+        # Creación de objeto TipoPruebaLocal
+        tipoPruebaLocal = TipoPruebaLocal(
+            name=name,
+            category=category,
+            device=device,
+            intervalos=intervalos
+        )
+
+        # Guarda el objeto en la base de datos
+        client.tipoPruebaLocal.insert_one(tipoPruebaLocal.dict())
+
+        return tipoPruebaLocal
         
-
     except Exception as e:
         print("Error (localDeviceService): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
