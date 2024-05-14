@@ -23,12 +23,15 @@ async def users(
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
     
-
-    users = users_schema(client.users.find())
-    if len(users) == 0:
-         raise HTTPException(status_code = 204, detail="La lista está vacía")
-    
-    return users
+    try:
+        users = users_schema(client.users.find())
+        if len(users) == 0:
+            raise HTTPException(status_code = 204, detail="La lista está vacía")
+        
+        return users
+    except Exception as e:
+        print("Error (userController): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 @app.get("/{id}")  # Path
 async def user(id: str, user: User = Depends(current_user)):
@@ -91,8 +94,9 @@ async def updateUser(user: User, userReg: User = Depends(current_user)):
 
     try:
         client.users.find_one_and_replace({"_id": ObjectId(user.id)}, user_dict)
-    except:
-        return {"error": "No se ha actualizado el usuario"}
+    except Exception as e:
+        print("Error (userController): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     return userService.search_user("_id", ObjectId(user.id))
     

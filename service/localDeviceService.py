@@ -2,6 +2,7 @@
 
 from db.models.user import User
 from db.models.PruebaConsumo import TipoPruebaLocal
+from db.schemas.pruebaConsumo import tiposPruebaLocal_schema
 from fastapi import HTTPException, status
 from db.client import client
 from bson import ObjectId
@@ -77,7 +78,7 @@ async def listAll(token: str, dominio: str):
         print("Error (localDeviceService): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
-async def save_tprueba(data: dict):
+async def save_tprueba(data: dict, user: User):
     try:
         print("Guardando tipo de prueba")
 
@@ -89,6 +90,7 @@ async def save_tprueba(data: dict):
 
         # Creación de objeto TipoPruebaLocal
         tipoPruebaLocal = TipoPruebaLocal(
+            userName=user.username,
             name=name,
             category=category,
             device=device,
@@ -97,6 +99,22 @@ async def save_tprueba(data: dict):
 
         # Guarda el objeto en la base de datos
         client.tipoPruebaLocal.insert_one(tipoPruebaLocal.dict())
+
+        return tipoPruebaLocal
+        
+    except Exception as e:
+        print("Error (localDeviceService): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+async def get_tprueba(user: User):
+    try:
+        print("Listando tipos de prueba")
+
+        # Obtiene los tipos de prueba de la base de datos del usuario
+        tipoPruebaLocal = tiposPruebaLocal_schema(client.tipoPruebaLocal.find({"userName": user.username}))
+
+        if len(tipoPruebaLocal) == 0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay tipos de prueba guardados")
 
         return tipoPruebaLocal
         

@@ -26,6 +26,7 @@ class Intervalos(BaseModel):
     script: Optional[str]
 
 class TipoPruebaLocal(BaseModel):
+    userName: Optional[str]
     name: Optional[str]
     category: Optional[str]
     device: Optional[str]

@@ -56,7 +56,6 @@ async def get_ha(user: User = Depends(current_user)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
             
     try:
-        print("Usuario: ", user)
         return user.homeAssistant
     except Exception as e:
         print("Error (localDeviceController): ", e)
@@ -77,13 +76,30 @@ async def save_tprueba(data: dict, user: User = Depends(current_user)):
     # Comprueba que el nombre, categoría, dispositivo y script existan
     if not data.get('name') or not data.get('category') or not data.get('device') or not data.get('intervalos'):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Faltan datos")
+
+    # Comprueba que la category y el device sean la misma categoría.
+    categoryDevice = data.get('device').split('.')[0]
+    if data.get('category') != categoryDevice:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La categoría y el dispositivo no coinciden")
     
     try:
-        return await localDeviceService.save_tprueba(data)
+        return await localDeviceService.save_tprueba(data, user)
     except Exception as e:
         print("Error (localDeviceController): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+# Listar Tipos de Prueba
+@app.get("/getTPrueba")
+async def get_tprueba(user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
     
+    try:
+        return await localDeviceService.get_tprueba(user)
+    except Exception as e:
+        print("Error (localDeviceController): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
 # Listar todos los scripts de Home Assistant y dispositivos locales
 @app.get("/")

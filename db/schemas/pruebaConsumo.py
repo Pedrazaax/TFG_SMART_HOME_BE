@@ -36,5 +36,15 @@ def pruebaConsumo_schema(pConsumo) -> dict:
 def pruebasConsumo_schema(psConsumo) -> list:
     return [pruebaConsumo_schema(pConsumo) for pConsumo in psConsumo]
 
+def tipoPruebaLocal_schema(tipo) -> dict:
+    return {"userName": tipo["userName"],
+            "name": tipo["name"],
+            "category": tipo["category"],
+            "device": tipo["device"],
+            "intervalos": tipo["intervalos"]}
+
+def tiposPruebaLocal_schema(tipos) -> list:
+    return [tipoPruebaLocal_schema(tipo) for tipo in tipos]
+
 
 
