@@ -21,17 +21,6 @@ class TipoPrueba(BaseModel):
     tipoDevice: Optional[str]
     intervaloPrueba: List[IntervaloPrueba]
 
-class Intervalos(BaseModel):
-    time: int
-    script: Optional[str]
-
-class TipoPruebaLocal(BaseModel):
-    userName: Optional[str]
-    name: Optional[str]
-    category: Optional[str]
-    device: Optional[str]
-    intervalos: List[Intervalos]
-
 class PruebaConsumo(BaseModel):
     idPrueba: Optional[str]
     tipoDevice: Optional[str]
@@ -41,3 +30,34 @@ class PruebaConsumo(BaseModel):
     timeTotal: Optional[int]
     consumoMedio:Optional[float]
     dateTime:Optional[str]
+
+# Clase para el tipo de prueba local
+
+class Intervalos(BaseModel):
+    time: int
+    script: Optional[str]
+    consumo: Optional[float]
+    current: Optional[List[float]]
+    power: Optional[List[float]]
+    voltage: Optional[List[float]]
+
+class TipoPruebaLocal(BaseModel):
+    userName: Optional[str]
+    name: Optional[str]
+    category: Optional[str]
+    device: Optional[str]
+    intervalos: List[Intervalos]
+
+# Clase para Prueba de consumo local
+
+class PruebaConsumoLocal(BaseModel):
+    userName: Optional[str]
+    name: Optional[str]
+    category: Optional[str]
+    device: Optional[str]
+    TipoPrueba: Optional[TipoPruebaLocal]
+    intervalos: List[Intervalos]
+    socket: Optional[str]
+    timeTotal: Optional[int]
+    consumoMedio: Optional[float]
+    dateTime: Optional[str]
