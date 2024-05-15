@@ -38,7 +38,6 @@ class Intervalos(BaseModel):
     script: Optional[str]
     consumo: Optional[float]
     current: Optional[List[float]]
-    power: Optional[List[float]]
     voltage: Optional[List[float]]
 
 class TipoPruebaLocal(BaseModel):
@@ -55,7 +54,7 @@ class PruebaConsumoLocal(BaseModel):
     name: Optional[str]
     category: Optional[str]
     device: Optional[str]
-    TipoPrueba: Optional[TipoPruebaLocal]
+    tipoPrueba: Optional[TipoPruebaLocal]
     intervalos: List[Intervalos]
     socket: Optional[str]
     timeTotal: Optional[int]
