@@ -180,12 +180,18 @@ async def save_pconsumo(data: dict, user: User):
         name = data.get('name')
         category = data.get('category')
         device = data.get('device')
-        tipoPrueba = data.get('TipoPrueba')
-        enchufe = data.get('enchufe')
+        tipoPrueba = data.get('tipoPrueba')
+        enchufe = data.get('socket')
+
+        # Obtiene el tipo de prueba de la base de datos
+        tipoPrueba = client.tipoPruebaLocal.find_one({"userName": user.username, "name": tipoPrueba})
+
+        print("Tipo de prueba: ", tipoPrueba)
 
         # Obtiene los intervalos del tipo de prueba
         intervalos = []
         for intervalo in tipoPrueba["intervalos"]:
+            print(intervalo)
             intervalos.append(intervalo)
 
         # Recorremos la lista de intervalos del tipo de prueba
@@ -198,11 +204,11 @@ async def save_pconsumo(data: dict, user: User):
             timeTotal += intervalo["time"]
 
             # Inicializamos el dispositivo con su estado
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient() as cliente:
                 body = {
                     "entity_id": intervalo["script"]
                 }
-                response = await client.post(url, headers=headers, json=body)
+                response = await cliente.post(url, headers=headers, json=body)
                 response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
                 
             # Calcular consumo del intervalo
