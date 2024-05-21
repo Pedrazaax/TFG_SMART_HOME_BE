@@ -144,7 +144,7 @@ async def get_pconsumo(user: User):
         print("Listando pruebas de consumo")
 
         # Obtiene las pruebas de consumo de la base de datos del usuario
-        pruebaConsumoLocal = pruebasConsumoLocal_schema(client.pruebaConsumo.find({"userName": user.username}))
+        pruebaConsumoLocal = pruebasConsumoLocal_schema(client.pruebaConsumoLocal.find({"userName": user.username}))
 
         if len(pruebaConsumoLocal) == 0:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay pruebas de consumo guardadas")
@@ -173,8 +173,11 @@ async def save_pconsumo(data: dict, user: User):
                 "Content-Type": "application/json"
             }
 
+        # URL de la petición POST
+        url = f"{user.homeAssistant.dominio}/api/services/script/turn_on"
+
         # URL de la petición GET
-        url = f"{user.homeAssistant.dominio}/api/states/{data.get('device')}"
+        urlGet = f"{user.homeAssistant.dominio}/api/states/{data.get('socket')}"
 
         # Obtiene los datos del JSON
         name = data.get('name')
@@ -210,9 +213,9 @@ async def save_pconsumo(data: dict, user: User):
                 }
                 response = await cliente.post(url, headers=headers, json=body)
                 response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
-                
+            
             # Calcular consumo del intervalo
-            intervalo["consumo"], intervalo["current"], intervalo["voltage"] = await calculate_average_consumption(data.get('socket'), intervalo["time"], headers, url)
+            intervalo["consumo"], intervalo["current"], intervalo["voltage"] = await calculate_average_consumption(data.get('socket'), intervalo["time"], headers, urlGet)
 
             # Sumatorio total de los consumos de todos los intervalos
             consumoSuma += intervalo["consumo"]
@@ -227,12 +230,14 @@ async def save_pconsumo(data: dict, user: User):
             category=category,
             device=device,
             tipoPrueba=tipoPrueba,
-            enchufe=enchufe,
+            socket=enchufe,
             intervalos=intervalos,
             timeTotal=timeTotal,
             consumoMedio=consumoMedio,
             dateTime=str(datetime.now())
         )
+
+        print("Prueba de consumo: ", pruebaConsumoLocal)
 
         # Guarda el objeto en la base de datos
         client.pruebaConsumoLocal.insert_one(pruebaConsumoLocal.dict())
@@ -256,10 +261,11 @@ async def calculate_average_consumption(socket_id: str, duration: int, headers, 
     while time.time() - start_time < duration:
 
         async with httpx.AsyncClient() as client:
-                response = await client.post(url, headers=headers)
+                response = await client.get(url, headers=headers)
                 response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
                 responseJson = response.json()  # Parsea la respuesta JSON a un objeto Python
-        
+                print("Response: ", responseJson)
+
         status = responseJson["attributes"]
 
         if status["current"]:

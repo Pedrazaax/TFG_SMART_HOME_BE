@@ -87,6 +87,7 @@ async def save_tprueba(data: dict, user: User = Depends(current_user)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se puede repetir el nombre")
     
     try:
+        print("Datos: ", data)
         return await localDeviceService.save_tprueba(data, user)
     except Exception as e:
         print("Error (localDeviceController): ", e)
@@ -128,7 +129,18 @@ async def save_pconsumo(data: dict, user: User = Depends(current_user)):
         print("Error (localDeviceController): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
+# Listar Pruebas de Consumo
+@app.get("/getPConsumo")
+async def get_pconsumo(user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
     
+    try:
+        return await localDeviceService.get_pconsumo(user)
+    except Exception as e:
+        print("Error (localDeviceController): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
 # Listar todos los scripts de Home Assistant y dispositivos locales
 @app.get("/")
