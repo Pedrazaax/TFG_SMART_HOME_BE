@@ -55,7 +55,6 @@ class PruebaConsumoLocal(BaseModel):
     category: Optional[str]
     device: Optional[str]
     tipoPrueba: Optional[TipoPruebaLocal]
-    intervalos: List[Intervalos]
     socket: Optional[str]
     timeTotal: Optional[int]
     consumoMedio: Optional[float]

@@ -194,7 +194,6 @@ async def save_pconsumo(data: dict, user: User):
         # Obtiene los intervalos del tipo de prueba
         intervalos = []
         for intervalo in tipoPrueba["intervalos"]:
-            print(intervalo)
             intervalos.append(intervalo)
 
         # Recorremos la lista de intervalos del tipo de prueba
@@ -231,13 +230,12 @@ async def save_pconsumo(data: dict, user: User):
             device=device,
             tipoPrueba=tipoPrueba,
             socket=enchufe,
-            intervalos=intervalos,
             timeTotal=timeTotal,
             consumoMedio=consumoMedio,
             dateTime=str(datetime.now())
         )
 
-        print("Prueba de consumo: ", pruebaConsumoLocal)
+        print("Prueba de consumo: ", pruebaConsumoLocal.json())
 
         # Guarda el objeto en la base de datos
         client.pruebaConsumoLocal.insert_one(pruebaConsumoLocal.dict())
@@ -264,10 +262,9 @@ async def calculate_average_consumption(socket_id: str, duration: int, headers, 
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
                 responseJson = response.json()  # Parsea la respuesta JSON a un objeto Python
-                print("Response: ", responseJson)
 
         status = responseJson["attributes"]
-
+        print("Consumo (W): ", status["current_consumption"])
         if status["current"]:
             current = status["current_consumption"]
             voltage = status["voltage"]
