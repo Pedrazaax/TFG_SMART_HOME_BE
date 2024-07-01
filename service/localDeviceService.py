@@ -58,13 +58,21 @@ async def validate_domain(dominio: str, user: User):
         print("Error (localDeviceService): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
-async def check_name(name: str, user: User):
+async def check_name(name: str, user: User, key: str):
     try:
         # Comprueba si el nombre ya existe en la base de datos
-        if client.tipoPruebaLocal.find_one({"userName": user.username, "name": name}):
-            return True
+        if key == "pConsumo":
+            if client.pruebaConsumoLocal.find_one({"userName": user.username, "name": name}):
+                return True
+            else:
+                return False
+        elif key == "tPrueba":
+            if client.tipoPruebaLocal.find_one({"userName": user.username, "name": name}):
+                return True
+            else:
+                return False
         else:
-            return False
+            raise ValueError("Invalid key")
 
     except Exception as e:
         print("Error (localDeviceService): ", e)
@@ -118,6 +126,32 @@ async def save_tprueba(data: dict, user: User):
         client.tipoPruebaLocal.insert_one(tipoPruebaLocal.dict())
 
         return tipoPruebaLocal
+        
+    except Exception as e:
+        print("Error (localDeviceService): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+async def delete_tprueba(name: str, user: User):
+    try:
+        print("Borrando tipo de prueba")
+
+        # Elimina el objeto de la base de datos
+        client.tipoPruebaLocal.delete_one({"userName": user.username, "name": name})
+
+        return {"message": "Tipo de prueba eliminado"}
+        
+    except Exception as e:
+        print("Error (localDeviceService): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+async def delete_pconsumo(name: str, user: User):
+    try:
+        print("Borrando prueba de consumo")
+
+        # Elimina el objeto de la base de datos
+        client.pruebaConsumoLocal.delete_one({"userName": user.username, "name": name})
+
+        return {"message": "Prueba de consumo eliminada"}
         
     except Exception as e:
         print("Error (localDeviceService): ", e)

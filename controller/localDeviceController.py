@@ -82,13 +82,54 @@ async def save_tprueba(data: dict, user: User = Depends(current_user)):
     if data.get('category') != categoryDevice:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La categoría y el dispositivo no coinciden")
     
+    # Comprueba que los tiempos de intervalos no sean 0.
+    for intervalo in data.get('intervalos'):
+        if intervalo.get('time') == 0 or intervalo.get('script') == "" or intervalo.get('script') is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Intervalos vacíos o con tiempo/script faltante")
+    
     # Comprueba que el nombre no sea repetido
-    if await localDeviceService.check_name(data.get('name'), user):
+    if await localDeviceService.check_name(data.get('name'), user, 'tPrueba'):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se puede repetir el nombre")
     
     try:
         print("Datos: ", data)
         return await localDeviceService.save_tprueba(data, user)
+    except Exception as e:
+        print("Error (localDeviceController): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+# Eliminar tipo de prueba
+@app.delete("/deleteTPrueba/{name}")
+async def delete_tprueba(name: str, user: User = Depends(current_user)):
+    print("Nombre: ", name)
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
+    # Comprueba que el id no esté vacío
+    if not name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="ID vacío")
+    
+    try:
+        return await localDeviceService.delete_tprueba(name, user)
+    except Exception as e:
+        print("Error (localDeviceController): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+# Eliminar prueba de consumo
+@app.delete("/deletePConsumo/{name}")
+async def delete_pconsumo(name: str, user: User = Depends(current_user)):
+    print("Nombre: ", name)
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
+    # Comprueba que el id no esté vacío
+    if not name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="ID vacío")
+    
+    try:
+        return await localDeviceService.delete_pconsumo(name, user)
     except Exception as e:
         print("Error (localDeviceController): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
@@ -122,6 +163,10 @@ async def save_pconsumo(data: dict, user: User = Depends(current_user)):
     # Comprueba que el nombre, categoría, dispositivo, tipo de prueba y enchufe existan
     if not data.get('name') or not data.get('category') or not data.get('device') or not data.get('tipoPrueba') or not data.get('socket'):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Faltan datos")
+    
+    # Comprueba que el nombre no sea repetido
+    if await localDeviceService.check_name(data.get('name'), user, 'pConsumo'):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se puede repetir el nombre")
 
     try:
         return await localDeviceService.save_pconsumo(data, user)
