@@ -183,6 +183,8 @@ async def get_pconsumo(user: User = Depends(current_user)):
     
     try:
         return await localDeviceService.get_pconsumo(user)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         print("Error (localDeviceController): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

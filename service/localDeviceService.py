@@ -179,12 +179,13 @@ async def get_pconsumo(user: User):
 
         # Obtiene las pruebas de consumo de la base de datos del usuario
         pruebaConsumoLocal = pruebasConsumoLocal_schema(client.pruebaConsumoLocal.find({"userName": user.username}))
-
+    
         if len(pruebaConsumoLocal) == 0:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay pruebas de consumo guardadas")
-
-        return pruebaConsumoLocal
-        
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No hay pruebas de consumo guardadas")
+        else:
+            return pruebaConsumoLocal
+    except HTTPException as e:
+        raise e
     except Exception as e:
         print("Error (localDeviceService): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
