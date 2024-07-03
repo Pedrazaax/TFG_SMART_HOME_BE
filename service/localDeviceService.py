@@ -231,6 +231,9 @@ async def save_pconsumo(data: dict, user: User):
         for intervalo in tipoPrueba["intervalos"]:
             intervalos.append(intervalo)
 
+        # Inicializar la bombilla a estado E20 para hacer prueba de consumo.
+        ############################################################
+
         # Recorremos la lista de intervalos del tipo de prueba
         for intervalo in intervalos:
             # Comprueba que el tiempo del intervalo sea mayor que 0
@@ -282,6 +285,15 @@ async def save_pconsumo(data: dict, user: User):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
 async def calculate_average_consumption(socket_id: str, duration: int, headers, url: str) -> tuple[float, List[float], List[float]]:
+
+    # Restamos a los resultados el consumo de la bombilla con el estado E20
+    # Current: 0.09 A
+    # Voltage: 232,4 V
+    # Power: 14,3 W
+    # Energy: 0,090 KWh
+
+    ##############################
+
     kwh = 0
     total_current = 0
     total_voltage = 0

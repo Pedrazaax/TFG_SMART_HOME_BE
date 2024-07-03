@@ -150,26 +150,27 @@ async def get_tprueba(user: User = Depends(current_user)):
 # Guardar prueba de consumo
 @app.post("/savePConsumo")
 async def save_pconsumo(data: dict, user: User = Depends(current_user)):
-    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
-    
-    # Comprueba que los datos no estén vacíos
-    if not data:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Datos vacíos")
-    
-    print("Datos: ", data) 
-
-    # Comprueba que el nombre, categoría, dispositivo, tipo de prueba y enchufe existan
-    if not data.get('name') or not data.get('category') or not data.get('device') or not data.get('tipoPrueba') or not data.get('socket'):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Faltan datos")
-    
-    # Comprueba que el nombre no sea repetido
-    if await localDeviceService.check_name(data.get('name'), user, 'pConsumo'):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se puede repetir el nombre")
 
     try:
+        # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+        if not user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+        
+        # Comprueba que los datos no estén vacíos
+        if not data:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Datos vacíos") 
+
+        # Comprueba que el nombre, categoría, dispositivo, tipo de prueba y enchufe existan
+        if not data.get('name') or not data.get('category') or not data.get('device') or not data.get('tipoPrueba') or not data.get('socket'):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Faltan datos")
+        
+        # Comprueba que el nombre no sea repetido
+        if await localDeviceService.check_name(data.get('name'), user, 'pConsumo'):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se puede repetir el nombre")
+
         return await localDeviceService.save_pconsumo(data, user)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         print("Error (localDeviceController): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
