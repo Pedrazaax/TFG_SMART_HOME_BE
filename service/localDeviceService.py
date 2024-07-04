@@ -12,6 +12,17 @@ from db.client import client
 from bson import ObjectId
 import httpx
 
+# URLs para las peticiones
+CURRENT_URL = "https://gsyaiot.me/api/states/sensor.athom_smart_plug_v2_9d8b76_current"
+VOLTAGE_URL = "https://gsyaiot.me/api/states/sensor.athom_smart_plug_v2_9d8b76_voltage"
+ENERGY_URL = "https://gsyaiot.me/api/states/sensor.athom_smart_plug_v2_9d8b76_energy"
+POWER_URL = "https://gsyaiot.me/api/states/sensor.athom_smart_plug_v2_9d8b76_power"
+
+# Valores a restar
+EB20_CURRENT = 0.09
+EB20_ENERGY = 0.09
+EB20_POWER = 14.3
+
 async def save_homeAssistant(token: str, dominio: str, user: User):
     try:
         # Crear tupla homeAssistant
@@ -211,9 +222,6 @@ async def save_pconsumo(data: dict, user: User):
         # URL de la petición POST
         url = f"{user.homeAssistant.dominio}/api/services/script/turn_on"
 
-        # URL de la petición GET
-        urlGet = f"{user.homeAssistant.dominio}/api/states/{data.get('socket')}"
-
         # Obtiene los datos del JSON
         name = data.get('name')
         category = data.get('category')
@@ -231,8 +239,17 @@ async def save_pconsumo(data: dict, user: User):
         for intervalo in tipoPrueba["intervalos"]:
             intervalos.append(intervalo)
 
-        # Inicializar la bombilla a estado E20 para hacer prueba de consumo.
-        ############################################################
+        # Inicializar la bombilla a estado EB20 para hacer prueba de consumo.
+        async with httpx.AsyncClient() as cliente:
+            body = {
+                "entity_id": "script.eb20"
+            }
+            response = await cliente.post(url, headers=headers, json=body)
+            response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
+        
+        print("Esperando 10 segundos...")
+        # Espera 3 segundos
+        await sleep(10)
 
         # Recorremos la lista de intervalos del tipo de prueba
         for intervalo in intervalos:
@@ -252,7 +269,7 @@ async def save_pconsumo(data: dict, user: User):
                 response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
             
             # Calcular consumo del intervalo
-            intervalo["consumo"], intervalo["current"], intervalo["voltage"] = await calculate_average_consumption(data.get('socket'), intervalo["time"], headers, urlGet)
+            intervalo["consumo"], intervalo["current"], intervalo["voltage"], intervalo["energy"], intervalo["power"] = await calculate_average_consumption(intervalo["time"], headers)
 
             # Sumatorio total de los consumos de todos los intervalos
             consumoSuma += intervalo["consumo"]
@@ -278,61 +295,84 @@ async def save_pconsumo(data: dict, user: User):
         # Guarda el objeto en la base de datos
         client.pruebaConsumoLocal.insert_one(pruebaConsumoLocal.dict())
 
+        # Apagar las bombillas
+        async with httpx.AsyncClient() as cliente:
+            body = {
+                "entity_id": "script.eb19"
+            }
+            response = await cliente.post(url, headers=headers, json=body)
+            response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
+
         return pruebaConsumoLocal
         
     except Exception as e:
         print("Error (localDeviceService): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
-async def calculate_average_consumption(socket_id: str, duration: int, headers, url: str) -> tuple[float, List[float], List[float]]:
-
-    # Restamos a los resultados el consumo de la bombilla con el estado E20
-    # Current: 0.09 A
-    # Voltage: 232,4 V
-    # Power: 14,3 W
-    # Energy: 0,090 KWh
-
-    ##############################
+async def calculate_average_consumption(duration: int, headers: dict) -> tuple[float, List[float], List[float], List[float], List[float]]:
+    print("Calculando consumos")
 
     kwh = 0
     total_current = 0
     total_voltage = 0
+    total_energy = 0
+    total_power = 0
 
     list_current = []
     list_voltage = []
-
+    list_energy = []
+    list_power = []
 
     start_time = time.time()
     while time.time() - start_time < duration:
-
         async with httpx.AsyncClient() as client:
-                response = await client.get(url, headers=headers)
-                response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
-                responseJson = response.json()  # Parsea la respuesta JSON a un objeto Python
+            # Petición para obtener el current
+            response_current = await client.get(CURRENT_URL, headers=headers)
+            response_current.raise_for_status()
+            current = response_current.json()["state"]
 
-        status = responseJson["attributes"]
-        print("Consumo (W): ", status["current_consumption"])
-        if status["current"]:
-            current = status["current_consumption"]
-            voltage = status["voltage"]
-            list_current.append(current)
-            list_voltage.append(voltage)
-            total_current += current
-            total_voltage += voltage
-        
-    await sleep(1)
+            # Petición para obtener el voltage
+            response_voltage = await client.get(VOLTAGE_URL, headers=headers)
+            response_voltage.raise_for_status()
+            voltage = response_voltage.json()["state"]
 
+            # Petición para obtener el energy
+            response_energy = await client.get(ENERGY_URL, headers=headers)
+            response_energy.raise_for_status()
+            energy = response_energy.json()["state"]
+
+        # Restar los valores E20
+        current = float(current) - EB20_CURRENT
+        voltage = float(voltage)
+        energy = float(energy) - EB20_ENERGY
+
+        # Calcular la potencia
+        current_in_amps = current / 1000  # mA a A
+        power = current_in_amps * voltage
+
+        # Acumular los valores
+        list_current.append(current)
+        list_voltage.append(voltage)
+        list_energy.append(energy)
+        list_power.append(power)
+
+        total_current += current
+        total_voltage += voltage
+        total_energy += energy
+        total_power += power
+
+        await sleep(1)
+
+    # Calcular los promedios
     average_current = total_current / duration
-    # average_power = total_power / duration
     average_voltage = total_voltage / duration
 
-    # Paso de mA -> A
-    current = average_current / 1000
-    # Calculo de la potencia
-    power = current * average_voltage
-    # Paso de segundos a horas
+    # Paso de mA a A y cálculo de la potencia promedio
+    current_in_amps = average_current / 1000
+    power = current_in_amps * average_voltage
+
+    # Paso de segundos a horas y cálculo de KWh
     h = duration / 3600
-    # Calculo de KWh
     kwh = (power * h) / 1000
 
-    return kwh, list_current, list_voltage
+    return kwh, list_current, list_voltage, list_energy, list_power
