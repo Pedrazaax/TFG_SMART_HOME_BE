@@ -272,7 +272,7 @@ async def save_pconsumo(data: dict, user: User):
             intervalo["consumo"], intervalo["current"], intervalo["voltage"], intervalo["energy"], intervalo["power"] = await calculate_average_consumption(intervalo["time"], headers)
 
             # Sumatorio total de los consumos de todos los intervalos
-            consumoSuma += intervalo["consumo"]
+            consumoSuma  += intervalo["consumo"]
 
         # Calculamos el consumo medio
         consumoMedio = consumoSuma / len(intervalos)
@@ -310,6 +310,9 @@ async def save_pconsumo(data: dict, user: User):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
 async def calculate_average_consumption(duration: int, headers: dict) -> tuple[float, List[float], List[float], List[float], List[float]]:
+    print("Esperando 10 segundos...")
+    await sleep(10)
+    
     print("Calculando consumos")
 
     kwh = 0

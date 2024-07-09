@@ -39,6 +39,8 @@ class Intervalos(BaseModel):
     consumo: Optional[float]
     current: Optional[List[float]]
     voltage: Optional[List[float]]
+    power: Optional[List[float]]
+    energy: Optional[List[float]]
 
 class TipoPruebaLocal(BaseModel):
     userName: Optional[str]
