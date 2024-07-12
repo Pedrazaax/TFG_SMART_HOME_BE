@@ -11,6 +11,7 @@ from datetime import datetime
 from db.client import client
 from bson import ObjectId
 import httpx
+import numpy as np
 
 # URLs para las peticiones
 CURRENT_URL = "https://gsyaiot.me/api/states/sensor.athom_smart_plug_v2_9d8b76_current"
@@ -210,8 +211,8 @@ async def save_pconsumo(data: dict, user: User):
 
         # Inicialización de variables
         timeTotal = 0
-        consumoSuma = 0
-        consumoMedio = 0
+        consumos = []
+        consumoMediana = 0
 
         # Inicialización de HTTP Headers con token bearer
         headers = {
@@ -271,11 +272,11 @@ async def save_pconsumo(data: dict, user: User):
             # Calcular consumo del intervalo
             intervalo["consumo"], intervalo["current"], intervalo["voltage"], intervalo["energy"], intervalo["power"] = await calculate_average_consumption(intervalo["time"], headers)
 
-            # Sumatorio total de los consumos de todos los intervalos
-            consumoSuma  += intervalo["consumo"]
+            # Lista de consumos
+            consumos.append(intervalo["consumo"])
 
         # Calculamos el consumo medio
-        consumoMedio = consumoSuma / len(intervalos)
+        consumoMediana = np.median(consumos)
 
         # Creación de objeto PruebaConsumo
         pruebaConsumoLocal = PruebaConsumoLocal(
@@ -286,7 +287,7 @@ async def save_pconsumo(data: dict, user: User):
             tipoPrueba=tipoPrueba,
             socket=enchufe,
             timeTotal=timeTotal,
-            consumoMedio=consumoMedio,
+            consumoMedio=consumoMediana,
             dateTime=str(datetime.now())
         )
 
@@ -315,7 +316,6 @@ async def calculate_average_consumption(duration: int, headers: dict) -> tuple[f
     
     print("Calculando consumos")
 
-    kwh = 0
     total_current = 0
     total_voltage = 0
     total_energy = 0
@@ -344,14 +344,15 @@ async def calculate_average_consumption(duration: int, headers: dict) -> tuple[f
             response_energy.raise_for_status()
             energy = response_energy.json()["state"]
 
+            # Petición para obtener el power
+            response_power = await client.get(POWER_URL, headers=headers)
+            response_power.raise_for_status()
+            power = response_power.json()["state"]
+
         # Restar los valores E20
         current = float(current) - EB20_CURRENT
         voltage = float(voltage)
         energy = float(energy) - EB20_ENERGY
-
-        # Calcular la potencia
-        current_in_amps = current / 1000  # mA a A
-        power = current_in_amps * voltage
 
         # Acumular los valores
         list_current.append(current)
@@ -362,20 +363,11 @@ async def calculate_average_consumption(duration: int, headers: dict) -> tuple[f
         total_current += current
         total_voltage += voltage
         total_energy += energy
-        total_power += power
+        total_power += float(power)
 
         await sleep(1)
 
-    # Calcular los promedios
-    average_current = total_current / duration
-    average_voltage = total_voltage / duration
+    # Calcular la mediana del consumo de energía
+    median_energy = np.median(list_energy)
 
-    # Paso de mA a A y cálculo de la potencia promedio
-    current_in_amps = average_current / 1000
-    power = current_in_amps * average_voltage
-
-    # Paso de segundos a horas y cálculo de KWh
-    h = duration / 3600
-    kwh = (power * h) / 1000
-
-    return kwh, list_current, list_voltage, list_energy, list_power
+    return median_energy, list_current, list_voltage, list_energy, list_power
