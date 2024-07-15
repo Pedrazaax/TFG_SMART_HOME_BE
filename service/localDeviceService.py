@@ -21,8 +21,8 @@ POWER_URL = "https://gsyaiot.me/api/states/sensor.athom_smart_plug_v2_9d8b76_pow
 
 # Valores a restar
 EB20_CURRENT = 0.09
-EB20_ENERGY = 0.09
-EB20_POWER = 14.3
+EB20_ENERGY = 0.084
+EB20_POWER = 14
 
 async def save_homeAssistant(token: str, dominio: str, user: User):
     try:
@@ -296,6 +296,7 @@ async def save_pconsumo(data: dict, user: User):
         # Guarda el objeto en la base de datos
         client.pruebaConsumoLocal.insert_one(pruebaConsumoLocal.dict())
 
+        
         # Apagar las bombillas
         async with httpx.AsyncClient() as cliente:
             body = {
@@ -303,7 +304,16 @@ async def save_pconsumo(data: dict, user: User):
             }
             response = await cliente.post(url, headers=headers, json=body)
             response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
-
+        
+        if category == "climate":
+            # Apagar termostatos
+            async with httpx.AsyncClient() as cliente:
+                body = {
+                    "entity_id": "script.ts7" # Apaga termostatos
+                }
+                response = await cliente.post(url, headers=headers, json=body)
+                response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
+                
         return pruebaConsumoLocal
         
     except Exception as e:
