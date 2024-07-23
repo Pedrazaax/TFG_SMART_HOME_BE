@@ -240,16 +240,17 @@ async def save_pconsumo(data: dict, user: User):
         for intervalo in tipoPrueba["intervalos"]:
             intervalos.append(intervalo)
 
-        # Inicializar la bombilla a estado EB20 para hacer prueba de consumo.
-        async with httpx.AsyncClient() as cliente:
-            body = {
-                "entity_id": "script.eb20"
-            }
-            response = await cliente.post(url, headers=headers, json=body)
-            response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
+        if enchufe == "switch.athom_smart_plug_v2_9d8b76_smart_plug_v2":
+            # Inicializar la bombilla a estado EB20 para hacer prueba de consumo.
+            async with httpx.AsyncClient() as cliente:
+                body = {
+                    "entity_id": "script.eb20"
+                }
+                response = await cliente.post(url, headers=headers, json=body)
+                response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
         
         print("Esperando 10 segundos...")
-        # Espera 3 segundos
+        # Espera 10 segundos
         await sleep(10)
 
         # Recorremos la lista de intervalos del tipo de prueba
@@ -270,7 +271,7 @@ async def save_pconsumo(data: dict, user: User):
                 response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
             
             # Calcular consumo del intervalo
-            intervalo["consumo"], intervalo["current"], intervalo["voltage"], intervalo["energy"], intervalo["power"] = await calculate_average_consumption(intervalo["time"], headers)
+            intervalo["consumo"], intervalo["current"], intervalo["voltage"], intervalo["energy"], intervalo["power"] = await calculate_average_consumption(intervalo["time"], headers, enchufe)
 
             # Lista de consumos
             consumos.append(intervalo["consumo"])
@@ -313,6 +314,14 @@ async def save_pconsumo(data: dict, user: User):
                 }
                 response = await cliente.post(url, headers=headers, json=body)
                 response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
+
+        if category == "camera":
+            async with httpx.AsyncClient() as cliente:
+                body = {
+                    "entity_id": "script.c1" # Apaga cámaras
+                }
+                response = await cliente.post(url, headers=headers, json=body)
+                response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
                 
         return pruebaConsumoLocal
         
@@ -320,7 +329,7 @@ async def save_pconsumo(data: dict, user: User):
         print("Error (localDeviceService): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
-async def calculate_average_consumption(duration: int, headers: dict) -> tuple[float, List[float], List[float], List[float], List[float]]:
+async def calculate_average_consumption(duration: int, headers: dict, enchufe: str) -> tuple[float, List[float], List[float], List[float], List[float]]:
     print("Esperando 10 segundos...")
     await sleep(10)
     
@@ -359,10 +368,15 @@ async def calculate_average_consumption(duration: int, headers: dict) -> tuple[f
             response_power.raise_for_status()
             power = response_power.json()["state"]
 
-        # Restar los valores E20
-        current = float(current) - EB20_CURRENT
-        voltage = float(voltage)
-        energy = float(energy) - EB20_ENERGY
+        if enchufe == "switch.athom_smart_plug_v2_9d8b76_smart_plug_v2":
+            # Restar los valores E20
+            current = float(current) - EB20_CURRENT
+            voltage = float(voltage)
+            energy = float(energy) - EB20_ENERGY
+        else:
+            current = float(current)
+            voltage = float(voltage)
+            energy = float(energy)
 
         # Acumular los valores
         list_current.append(current)
