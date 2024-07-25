@@ -11,7 +11,6 @@ from datetime import datetime
 from db.client import client
 from bson import ObjectId
 import httpx
-import numpy as np
 
 # URLs para las peticiones
 CURRENT_URL = "https://gsyaiot.me/api/states/sensor.athom_smart_plug_v2_9d8b76_current"
@@ -20,9 +19,9 @@ ENERGY_URL = "https://gsyaiot.me/api/states/sensor.athom_smart_plug_v2_9d8b76_en
 POWER_URL = "https://gsyaiot.me/api/states/sensor.athom_smart_plug_v2_9d8b76_power"
 
 # Valores a restar
-EB20_CURRENT = 0.09
-EB20_ENERGY = 0.084
-EB20_POWER = 14
+EB20_CURRENT = 0.07
+EB20_ENERGY = 0
+EB20_POWER = 9
 
 async def save_homeAssistant(token: str, dominio: str, user: User):
     try:
@@ -212,7 +211,7 @@ async def save_pconsumo(data: dict, user: User):
         # Inicialización de variables
         timeTotal = 0
         consumos = []
-        consumoMediana = 0
+        consumoMedio = 0
 
         # Inicialización de HTTP Headers con token bearer
         headers = {
@@ -277,7 +276,7 @@ async def save_pconsumo(data: dict, user: User):
             consumos.append(intervalo["consumo"])
 
         # Calculamos el consumo medio
-        consumoMediana = np.median(consumos)
+        consumoMedio = sum(consumos) / len(consumos)
 
         # Creación de objeto PruebaConsumo
         pruebaConsumoLocal = PruebaConsumoLocal(
@@ -288,7 +287,7 @@ async def save_pconsumo(data: dict, user: User):
             tipoPrueba=tipoPrueba,
             socket=enchufe,
             timeTotal=timeTotal,
-            consumoMedio=consumoMediana,
+            consumoMedio=consumoMedio,
             dateTime=str(datetime.now())
         )
 
@@ -299,12 +298,12 @@ async def save_pconsumo(data: dict, user: User):
 
         
         # Apagar las bombillas
-        async with httpx.AsyncClient() as cliente:
-            body = {
-                "entity_id": "script.eb19"
-            }
-            response = await cliente.post(url, headers=headers, json=body)
-            response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
+        # async with httpx.AsyncClient() as cliente:
+        #    body = {
+        #        "entity_id": "script.eb19"
+        #    }
+        #    response = await cliente.post(url, headers=headers, json=body)
+        #    response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
         
         if category == "climate":
             # Apagar termostatos
@@ -330,8 +329,8 @@ async def save_pconsumo(data: dict, user: User):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
 async def calculate_average_consumption(duration: int, headers: dict, enchufe: str) -> tuple[float, List[float], List[float], List[float], List[float]]:
-    print("Esperando 10 segundos...")
-    await sleep(10)
+    print("Esperando 15 segundos...")
+    await sleep(15)
     
     print("Calculando consumos")
 
@@ -373,10 +372,12 @@ async def calculate_average_consumption(duration: int, headers: dict, enchufe: s
             current = float(current) - EB20_CURRENT
             voltage = float(voltage)
             energy = float(energy) - EB20_ENERGY
+            power = float(power) - EB20_POWER
         else:
             current = float(current)
             voltage = float(voltage)
             energy = float(energy)
+            power = float(power)
 
         # Acumular los valores
         list_current.append(current)
@@ -392,6 +393,6 @@ async def calculate_average_consumption(duration: int, headers: dict, enchufe: s
         await sleep(1)
 
     # Calcular la mediana del consumo de energía
-    median_energy = np.median(list_energy)
+    media_energy = sum(list_energy) / len(list_energy)
 
-    return median_energy, list_current, list_voltage, list_energy, list_power
+    return media_energy, list_current, list_voltage, list_energy, list_power
