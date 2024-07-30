@@ -421,3 +421,33 @@ async def sort_pconsumos(pconsumos):
                         dispositivo['pruebas'].append(pconsumo)
                         break
     return dispositivos
+
+async def getAllGlobalAverageMeasures(dispositivos):
+    for dispositivo in dispositivos:
+        total_energy=0
+        total_power=0
+        total_current=0
+        num_current_values=0
+        num_energy_values=0
+        num_power_values=0
+        averageI_energy=0
+        averageI_power=0
+        averageI_current=0
+        for prueba in dispositivo['pruebas']:
+            for intervalo in prueba['tipoPrueba']['intervalos']:
+                total_energy += sum(intervalo['energy'])
+                total_power += sum(intervalo['power'])
+                total_current += sum(intervalo['current'])
+                num_current_values += len(intervalo['current'])
+                num_energy_values += len(intervalo['energy'])
+                num_power_values += len(intervalo['power'])
+                averageI_energy += total_energy / num_energy_values
+                averageI_power += total_power / num_power_values
+                averageI_current += total_current / num_current_values
+        num_pruebas = len(dispositivo['pruebas'])
+        num_intervalos = sum(len(prueba['tipoPrueba']['intervalos']) for prueba in dispositivo['pruebas'])
+        dispositivo['consumoMedio'] = averageI_energy / num_intervalos
+        dispositivo['potenciaMedia'] = averageI_power / num_intervalos
+        dispositivo['intensidadMedia'] = averageI_current / num_intervalos
+        dispositivo['estado'] = "Global"
+    return dispositivos
