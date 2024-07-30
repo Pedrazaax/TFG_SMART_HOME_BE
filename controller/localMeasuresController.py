@@ -16,27 +16,12 @@ async def get_pconsumo(user: User = Depends(current_user)):
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
 
-    # Crear un conjunto para rastrear los valores ya vistos
-    dispositivos_vistos = set()
-    # Crear una lista para los objetos únicos
-    dispositivos = []
-
     try:
         pconsumos = await localDeviceService.get_pconsumo(user)
-        for pconsumo in pconsumos:
-            if pconsumo['device'] not in dispositivos_vistos:
-                dispositivos.append({
-                    "device":pconsumo['device'],
-                    "estado":"",
-                    "consumoMedio":0,
-                    "potenciaMedia":0,
-                    "intensidadMedia":0,
-                    "etiqueta":""
-                })
-                dispositivos_vistos.add(pconsumo['device'])
-        return dispositivos
+        dispositivos = await localDeviceService.sort_pconsumos(pconsumos)
+        return dispositivos[0]
     except HTTPException as e:
         raise e
     except Exception as e:
-        print("Error (localDeviceController): ", e)
+        print("Error (localMeasuresController): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

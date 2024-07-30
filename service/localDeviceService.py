@@ -396,3 +396,28 @@ async def calculate_average_consumption(duration: int, headers: dict, enchufe: s
     media_energy = sum(list_energy) / len(list_energy)
 
     return media_energy, list_current, list_voltage, list_energy, list_power
+
+async def sort_pconsumos(pconsumos):
+    # Crear un conjunto para rastrear los valores ya vistos
+    dispositivos_vistos = set()
+    # Crear una lista para los objetos únicos
+    dispositivos = []
+
+    for pconsumo in pconsumos:
+            if pconsumo['device'] not in dispositivos_vistos:
+                dispositivos.append({
+                    "device":pconsumo['device'],
+                    "estado":"",
+                    "consumoMedio":0,
+                    "potenciaMedia":0,
+                    "intensidadMedia":0,
+                    "etiqueta":"",
+                    "pruebas":[pconsumo]
+                })
+                dispositivos_vistos.add(pconsumo['device'])
+            else:
+                for dispositivo in dispositivos:
+                    if dispositivo['device'] == pconsumo['device']:
+                        dispositivo['pruebas'].append(pconsumo)
+                        break
+    return dispositivos
