@@ -19,7 +19,8 @@ async def get_pconsumo(user: User = Depends(current_user)):
     try:
         pconsumos = await localDeviceService.get_pconsumo(user)
         dispositivos = await localDeviceService.sort_pconsumos(pconsumos)
-        return dispositivos[0]
+        await localDeviceService.getAllAverageMeasures(dispositivos)
+        return dispositivos
     except HTTPException as e:
         raise e
     except Exception as e:
