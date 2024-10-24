@@ -453,6 +453,10 @@ async def getEEI(dispositivos):
     for dispositivo in dispositivos:
         if(dispositivo['device'].split('.')[0] == 'light'):
             getLightEEI(dispositivo)
+        elif(dispositivo['device'].split('.')[0] == 'camera'):
+            getCameraEEI(dispositivo)
+        elif(dispositivo['device'].split('.')[0] == 'climate'):
+            getClimateEEI(dispositivo)
 
 def getLightEEI(dispositivo):
     lm = 806
@@ -473,3 +477,45 @@ def getLightEEI(dispositivo):
         dispositivo['etiqueta'] = "F"
     else:
         dispositivo['etiqueta'] = "G"
+
+def getCameraEEI(dispositivo):
+    consumoCamarasGeneral = 0.192
+    eei = (dispositivo['consumoMedio']/consumoCamarasGeneral)
+
+    if eei <= 0.4:
+        dispositivo['etiqueta'] = "A"
+    elif 0.4 < eei <= 0.5:
+        dispositivo['etiqueta'] = "B"
+    elif 0.5 < eei <= 0.6:
+        dispositivo['etiqueta'] = "C"
+    elif 0.6 < eei <= 0.7:
+        dispositivo['etiqueta'] = "D"
+    elif 0.7 < eei <= 0.9:
+        dispositivo['etiqueta'] = "E"
+    elif 0.9 < eei <= 1.1:
+        dispositivo['etiqueta'] = "F"
+    else:
+        dispositivo['etiqueta'] = "G"
+
+def getClimateEEI(dispositivo):
+    consumoTermostatosgeneral = 0.036
+    eei = (dispositivo['consumoMedio']/consumoTermostatosgeneral)
+
+    if eei <= 0.3:
+        dispositivo['etiqueta'] = "A"
+    elif 0.3 < eei <= 0.4:
+        dispositivo['etiqueta'] = "B"
+    elif 0.4 < eei <= 0.55:
+        dispositivo['etiqueta'] = "C"
+    elif 0.55 < eei <= 0.75:
+        dispositivo['etiqueta'] = "D"
+    elif 0.75 < eei <= 1:
+        dispositivo['etiqueta'] = "E"
+    elif 1 < eei <= 1.25:
+        dispositivo['etiqueta'] = "F"
+    else:
+        dispositivo['etiqueta'] = "G"
+
+# def getMediaPlayerWithScreenEEI(dispositivo):
+
+# def getMediaPlayerWithOutScreenEEI(dispositivo):
