@@ -457,6 +457,11 @@ async def getEEI(dispositivos):
             getCameraEEI(dispositivo)
         elif(dispositivo['device'].split('.')[0] == 'climate'):
             getClimateEEI(dispositivo)
+        elif(dispositivo['device'].split('.')[0] == 'media_player'):
+            if(dispositivo['hub'].split('.')[0] == True):
+                getMediaPlayerWithScreenEEI(dispositivo)
+            else:
+                getMediaPlayerWithOutScreenEEI(dispositivo)
 
 def getLightEEI(dispositivo):
     lm = 806
@@ -518,4 +523,21 @@ def getClimateEEI(dispositivo):
 
 # def getMediaPlayerWithScreenEEI(dispositivo):
 
-# def getMediaPlayerWithOutScreenEEI(dispositivo):
+def getMediaPlayerWithOutScreenEEI(dispositivo):
+    consumoAltavozInteligenteGeneral = 0.12
+    eei = (dispositivo['consumoMedio']/consumoAltavozInteligenteGeneral)
+
+    if eei <= 0.3:
+        dispositivo['etiqueta'] = "A"
+    elif 0.3 < eei <= 0.4:
+        dispositivo['etiqueta'] = "B"
+    elif 0.4 < eei <= 0.55:
+        dispositivo['etiqueta'] = "C"
+    elif 0.55 < eei <= 0.75:
+        dispositivo['etiqueta'] = "D"
+    elif 0.75 < eei <= 1:
+        dispositivo['etiqueta'] = "E"
+    elif 1 < eei <= 1.25:
+        dispositivo['etiqueta'] = "F"
+    else:
+        dispositivo['etiqueta'] = "G"
