@@ -50,11 +50,11 @@ class TipoPruebaLocal(BaseModel):
     intervalos: List[Intervalos]
 
 # Clase para Prueba de consumo local
-
 class PruebaConsumoLocal(BaseModel):
     userName: Optional[str]
     name: Optional[str]
     category: Optional[str]
+    hub: Optional[bool]
     device: Optional[str]
     tipoPrueba: Optional[TipoPruebaLocal]
     socket: Optional[str]
