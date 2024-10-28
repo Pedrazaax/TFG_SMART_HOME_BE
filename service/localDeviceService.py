@@ -406,16 +406,29 @@ async def sort_pconsumos(pconsumos):
 
     for pconsumo in pconsumos:
             if pconsumo['device'] not in dispositivos_vistos:
-                dispositivos.append({
-                    "device":pconsumo['device'],
-                    "estado":"",
-                    "consumoMedio":0,
-                    "potenciaMedia":0,
-                    "intensidadMedia":0,
-                    "etiqueta":"",
-                    "pruebas":[pconsumo]
-                })
-                dispositivos_vistos.add(pconsumo['device'])
+                if "hub" not in pconsumo['tipoPrueba']:
+                    dispositivos.append({
+                        "device":pconsumo['device'],
+                        "estado":"",
+                        "consumoMedio":0,
+                        "potenciaMedia":0,
+                        "intensidadMedia":0,
+                        "etiqueta":"",
+                        "pruebas":[pconsumo]
+                    })
+                    dispositivos_vistos.add(pconsumo['device'])
+                else:
+                    dispositivos.append({
+                        "device":pconsumo['device'],
+                        "hub":pconsumo['tipoPrueba']['hub'],
+                        "estado":"",
+                        "consumoMedio":0,
+                        "potenciaMedia":0,
+                        "intensidadMedia":0,
+                        "etiqueta":"",
+                        "pruebas":[pconsumo]
+                    })
+                    dispositivos_vistos.add(pconsumo['device'])
             else:
                 for dispositivo in dispositivos:
                     if dispositivo['device'] == pconsumo['device']:
@@ -459,7 +472,7 @@ async def getEEI(dispositivos):
         elif(dispositivo['device'].split('.')[0] == 'climate'):
             getClimateEEI(dispositivo)
         elif(dispositivo['device'].split('.')[0] == 'media_player'):
-            if(dispositivo['hub']['be'] == True):
+            if not isinstance(dispositivo['hub'],bool):
                 getMediaPlayerWithScreenEEI(dispositivo)
             else:
                 getMediaPlayerWithOutScreenEEI(dispositivo)
@@ -530,7 +543,8 @@ def getMediaPlayerWithScreenEEI(dispositivo):
     alto_pantalla = (pulgadas_dispositivo/math.sqrt((relación_pantalla_ancho**2 + relación_pantalla_alto**2)))*relación_pantalla_alto
     A = (ancho_pantalla*0.254)*(alto_pantalla*0.254)
     C = 10 if dispositivo['hub']['t_pantalla'] == 'OLED' else 0
-    eei = (dispositivo['potenciaMedia']+1/3*((90*math.tan(0.02+0.004*(A-11))+4)+3)+C)
+    eei = ((dispositivo['potenciaMedia']+1)/(3*((90*math.tan(0.02+0.004*(A-11))+4)+3)+C))
+    print(eei)
 
     if eei < 0.3:
         dispositivo['etiqueta'] = "A"
