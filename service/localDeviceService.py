@@ -11,6 +11,7 @@ from datetime import datetime
 from db.client import client
 from bson import ObjectId
 import httpx
+import math
 
 # URLs para las peticiones
 CURRENT_URL = "https://gsyaiot.me/api/states/sensor.athom_smart_plug_v2_9d8b76_current"
@@ -458,7 +459,7 @@ async def getEEI(dispositivos):
         elif(dispositivo['device'].split('.')[0] == 'climate'):
             getClimateEEI(dispositivo)
         elif(dispositivo['device'].split('.')[0] == 'media_player'):
-            if(dispositivo['hub'].split('.')[0] == True):
+            if(dispositivo['hub']['be'] == True):
                 getMediaPlayerWithScreenEEI(dispositivo)
             else:
                 getMediaPlayerWithOutScreenEEI(dispositivo)
@@ -521,7 +522,30 @@ def getClimateEEI(dispositivo):
     else:
         dispositivo['etiqueta'] = "G"
 
-# def getMediaPlayerWithScreenEEI(dispositivo):
+def getMediaPlayerWithScreenEEI(dispositivo):
+    pulgadas_dispositivo = dispositivo['hub']['pulgadas']
+    relación_pantalla_ancho = dispositivo['hub']['rel_ancho']
+    relación_pantalla_alto = dispositivo['hub']['rel_alto']
+    ancho_pantalla = (pulgadas_dispositivo/math.sqrt((relación_pantalla_ancho**2 + relación_pantalla_alto**2)))*relación_pantalla_ancho
+    alto_pantalla = (pulgadas_dispositivo/math.sqrt((relación_pantalla_ancho**2 + relación_pantalla_alto**2)))*relación_pantalla_alto
+    A = (ancho_pantalla*0.254)*(alto_pantalla*0.254)
+    C = 10 if dispositivo['hub']['t_pantalla'] == 'OLED' else 0
+    eei = (dispositivo['potenciaMedia']+1/3*((90*math.tan(0.02+0.004*(A-11))+4)+3)+C)
+
+    if eei < 0.3:
+        dispositivo['etiqueta'] = "A"
+    elif 0.3 <= eei < 0.4:
+        dispositivo['etiqueta'] = "B"
+    elif 0.4 <= eei < 0.5:
+        dispositivo['etiqueta'] = "C"
+    elif 0.5 <= eei < 0.6:
+        dispositivo['etiqueta'] = "D"
+    elif 0.6 <= eei < 0.75:
+        dispositivo['etiqueta'] = "E"
+    elif 0.75 <= eei <= 1:
+        dispositivo['etiqueta'] = "F"
+    else:
+        dispositivo['etiqueta'] = "G"
 
 def getMediaPlayerWithOutScreenEEI(dispositivo):
     consumoAltavozInteligenteGeneral = 0.12
