@@ -460,6 +460,7 @@ async def getAllGlobalAverageMeasures(dispositivos):
         dispositivo['potenciaMedia'] = total_power / num_power_values
         dispositivo['intensidadMedia'] = total_current / num_current_values
         dispositivo['estado'] = "Global"
+        del dispositivo['pruebas']
         
     return dispositivos
 
@@ -579,3 +580,4 @@ def getMediaPlayerWithOutScreenEEI(dispositivo):
         dispositivo['etiqueta'] = "F"
     else:
         dispositivo['etiqueta'] = "G"
+
