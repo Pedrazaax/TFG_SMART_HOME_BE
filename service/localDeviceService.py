@@ -545,7 +545,6 @@ def getMediaPlayerWithScreenEEI(dispositivo):
     A = (ancho_pantalla*0.254)*(alto_pantalla*0.254)
     C = 10 if dispositivo['hub']['t_pantalla'] == 'OLED' else 0
     eei = ((dispositivo['potenciaMedia']+1)/(3*((90*math.tan(0.02+0.004*(A-11))+4)+3)+C))
-    print(eei)
 
     if eei < 0.3:
         dispositivo['etiqueta'] = "A"
@@ -581,3 +580,34 @@ def getMediaPlayerWithOutScreenEEI(dispositivo):
     else:
         dispositivo['etiqueta'] = "G"
 
+async def save_measuresData(data):
+    try:
+        # Data:  [{"device": "light.smart_bulb_2","estado": "Global","consumoMedio": 0.005231897341888171,"potenciaMedia": 8.997891842346474,"intensidadMedia": 0.0700000000000002,"etiqueta": "G"},{"device": "light.smart_bulb_tuya_1", ...
+        print("Guardando mediciones globales de los consumos")
+
+        class mediciones_dispositivo:
+            def __init__(self, device, estado, consumoMedio, potenciaMedia, intensidadMedia, etiqueta):
+                self.device = device
+                self.estado = estado
+                self.consumoMedio = consumoMedio
+                self.potenciaMedia = potenciaMedia
+                self.intensidadMedia = intensidadMedia
+                self.etiqueta = etiqueta
+            
+            def to_dict(self):
+                return self.__dict__
+        
+        mediciones_dispositivos = []
+        for medicion in data:
+            mediciones_dispositivos.append(mediciones_dispositivo(medicion["device"], medicion["estado"], medicion["consumoMedio"], medicion["potenciaMedia"], medicion["intensidadMedia"], medicion["etiqueta"]))
+        
+        mediciones_dispositivos_dict = [medicion.to_dict() for medicion in mediciones_dispositivos]
+
+        nueva_coleccion = "simComsumos"
+        if nueva_coleccion in client.list_collection_names():
+            client[nueva_coleccion].delete_many({})
+        resultado = client[nueva_coleccion].insert_many(mediciones_dispositivos_dict)
+        print("Datos de mediciones globales de los consumos guardados con exito: ", resultado.inserted_ids)
+    except Exception as e:
+        print("Error (localDeviceService.save_measuresData): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
