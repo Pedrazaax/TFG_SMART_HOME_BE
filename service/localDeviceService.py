@@ -204,7 +204,7 @@ async def get_pconsumo(user: User):
 async def save_pconsumo(data: dict, user: User):
     try:
 
-        # Data:  {'name': 'a', 'category': 'light', 'hub: boolean' ,'device': 'light.smart_bulb_tuya_1', 'tipoPrueba': 'Prueba1', 'socket': 'switch.smart_plug_tuya_1'}
+        # Data:  {'name': 'a', 'category': 'light', 'hub': {'be': True, 'pulgadas': 7, 'rel_ancho': 16, 'rel_alto': 9, 't_pantalla': 'LCD'} ,'device': 'light.smart_bulb_tuya_1', 'tipoPrueba': 'Prueba1', 'socket': 'switch.smart_plug_tuya_1'}
 
         print("Guardando prueba de consumo")
 
