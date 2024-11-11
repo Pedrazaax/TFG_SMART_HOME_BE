@@ -61,4 +61,15 @@ def pruebasConsumoLocal_schema(psConsumo) -> list:
     return [pruebaConsumoLocal_schema(pConsumo) for pConsumo in psConsumo]
 
 
+def dispositivoSimulador_schema(dispositivosSimulador) -> dict:
+    return {"userName": dispositivosSimulador["userName"],
+        "device": dispositivosSimulador["device"],
+        "estado": dispositivosSimulador["estado"],
+        "consumoMedio": dispositivosSimulador["consumoMedio"],
+        "potenciaMedia": dispositivosSimulador["potenciaMedia"],
+        "intensidadMedia": dispositivosSimulador["intensidadMedia"],
+        "etiqueta": dispositivosSimulador["etiqueta"]
+    }
 
+def dispositivosSimulador_schema(dispositivosSimulador) -> list:
+    return [dispositivoSimulador_schema(dSimulador) for dSimulador in dispositivosSimulador]

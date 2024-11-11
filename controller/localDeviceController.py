@@ -5,7 +5,6 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from controller.auth_usersController import current_user
 from db.models.user import User
 from service import localDeviceService
-
 app = APIRouter(prefix="/localDevices",
                      tags=["Local Devices"],
                      responses={404: {"detail":"Not found"}})

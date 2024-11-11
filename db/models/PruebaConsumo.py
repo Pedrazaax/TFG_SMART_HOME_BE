@@ -61,3 +61,12 @@ class PruebaConsumoLocal(BaseModel):
     timeTotal: Optional[int]
     consumoMedio: Optional[float]
     dateTime: Optional[str]
+
+class dispositivosSimulador(BaseModel):
+    userName: Optional[str]
+    device: Optional[str]
+    estado: Optional[str]
+    consumoMedio: Optional[str]
+    potenciaMedia: Optional[str]
+    intensidadMedia: Optional[str]
+    etiqueta: Optional[str]

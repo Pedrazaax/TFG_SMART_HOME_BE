@@ -3,7 +3,8 @@
 from fastapi import HTTPException, status
 from db.client import client, clientConsumoLocal
 from db.models.PruebaConsumo import TipoPrueba
-from db.schemas.pruebaConsumo import pruebaConsumo_schema, tipoPrueba_schema
+from db.models.user import User
+from db.schemas.pruebaConsumo import pruebaConsumo_schema, tipoPrueba_schema, dispositivosSimulador_schema
 from asyncio import sleep
 from typing import List
 from main import OpenApiSingleton
@@ -123,4 +124,21 @@ async def deletePConsumo(id: str):
         client.PruebasConsumo.delete_one({"idTipoPrueba": id})
     except Exception as e:
         print("Error (consumoService): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+async def get_dispositivosSimulador(user: User):
+    try:
+        print("Listando consumos de los dispositivos para el simulador")
+
+        # Obtiene las pruebas de consumo de la base de datos del usuario
+        dispositivosSimulador = dispositivosSimulador_schema(client.simConsumos.find({"userName": user.username}))
+    
+        if len(dispositivosSimulador) == 0:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No hay consumos para el simulador")
+        else:
+            return dispositivosSimulador
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print("Error (localDeviceService): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

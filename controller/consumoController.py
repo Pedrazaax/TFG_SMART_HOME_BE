@@ -4,7 +4,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException, status, Depends
 from controller.auth_usersController import current_user
 from db.models.user import User
-from db.models.PruebaConsumo import PruebaConsumo, TipoPrueba 
+from db.models.PruebaConsumo import PruebaConsumo, TipoPrueba
 from db.schemas.pruebaConsumo import pruebasConsumo_schema, tipoPruebas_schema
 from db.client import client
 from service import consumoService
@@ -80,4 +80,19 @@ async def deletePConsumo(id: str, user: User = Depends(current_user)):
         
     except Exception as e:
         print("Error (consumoController): ", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+# Listar Pruebas de Consumo
+@app.get("/getDispositivosSimulador")
+async def get_dispositivosSimulador(user: User = Depends(current_user)):
+    # Verifica si el usuario está autenticado a través del token JWT en la cabecera
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+    
+    try:
+        return await consumoService.get_dispositivosSimulador(user)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print("Error (localDeviceController): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

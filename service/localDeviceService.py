@@ -408,6 +408,7 @@ async def sort_pconsumos(pconsumos):
             if pconsumo['device'] not in dispositivos_vistos:
                 if "hub" not in pconsumo['tipoPrueba']:
                     dispositivos.append({
+                        "userName":pconsumo['userName'],
                         "device":pconsumo['device'],
                         "estado":"",
                         "consumoMedio":0,
@@ -419,6 +420,7 @@ async def sort_pconsumos(pconsumos):
                     dispositivos_vistos.add(pconsumo['device'])
                 else:
                     dispositivos.append({
+                        "userName":pconsumo['userName'],
                         "device":pconsumo['device'],
                         "hub":pconsumo['tipoPrueba']['hub'],
                         "estado":"",
@@ -586,7 +588,8 @@ async def save_measuresData(data):
         print("Guardando mediciones globales de los consumos")
 
         class mediciones_dispositivo:
-            def __init__(self, device, estado, consumoMedio, potenciaMedia, intensidadMedia, etiqueta):
+            def __init__(self, userName, device, estado, consumoMedio, potenciaMedia, intensidadMedia, etiqueta):
+                self.userName = userName
                 self.device = device
                 self.estado = estado
                 self.consumoMedio = consumoMedio
@@ -599,11 +602,11 @@ async def save_measuresData(data):
         
         mediciones_dispositivos = []
         for medicion in data:
-            mediciones_dispositivos.append(mediciones_dispositivo(medicion["device"], medicion["estado"], medicion["consumoMedio"], medicion["potenciaMedia"], medicion["intensidadMedia"], medicion["etiqueta"]))
+            mediciones_dispositivos.append(mediciones_dispositivo(medicion["userName"], medicion["device"], medicion["estado"], medicion["consumoMedio"], medicion["potenciaMedia"], medicion["intensidadMedia"], medicion["etiqueta"]))
         
         mediciones_dispositivos_dict = [medicion.to_dict() for medicion in mediciones_dispositivos]
 
-        nueva_coleccion = "simComsumos"
+        nueva_coleccion = "simConsumos"
         if nueva_coleccion in client.list_collection_names():
             client[nueva_coleccion].delete_many({})
         resultado = client[nueva_coleccion].insert_many(mediciones_dispositivos_dict)
