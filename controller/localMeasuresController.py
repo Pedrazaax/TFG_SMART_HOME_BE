@@ -14,11 +14,9 @@ app = APIRouter(prefix="/localMeasures",
 async def update_Measurements(user: User = Depends(current_user)):
     # Verifica si el usuario está autenticado a través del token JWT en la cabecera
     if not user:
-        print("user")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
 
     try:
-        print("try")
         pconsumos = await localDeviceService.get_pconsumo(user)
         dispositivos = await localDeviceService.sort_pconsumos(pconsumos)
         await localDeviceService.getAllGlobalAverageMeasures(dispositivos)
