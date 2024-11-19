@@ -49,12 +49,19 @@ class TipoPruebaLocal(BaseModel):
     device: Optional[str]
     intervalos: List[Intervalos]
 
-# Clase para Prueba de consumo local
+class hub(BaseModel):
+    be: bool
+    pulgadas: int
+    rel_ancho: int
+    rel_alto: int
+    t_pantalla: str
 
+# Clase para Prueba de consumo local
 class PruebaConsumoLocal(BaseModel):
     userName: Optional[str]
     name: Optional[str]
     category: Optional[str]
+    hub: Optional[hub]
     device: Optional[str]
     tipoPrueba: Optional[TipoPruebaLocal]
     socket: Optional[str]

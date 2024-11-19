@@ -160,7 +160,7 @@ async def save_pconsumo(data: dict, user: User = Depends(current_user)):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Datos vacíos") 
 
         # Comprueba que el nombre, categoría, dispositivo, tipo de prueba y enchufe existan
-        if not data.get('name') or not data.get('category') or not data.get('device') or not data.get('tipoPrueba') or not data.get('socket'):
+        if not data.get('name') or not data.get('category') or not data.get('hub') or not data.get('device') or not data.get('tipoPrueba') or not data.get('socket'):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Faltan datos")
         
         # Comprueba que el nombre no sea repetido
