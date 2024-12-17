@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Iniciar servidor en local: python -m uvicorn app:app
+# Iniciar servidor en local: python -m uvicorn app:app --reload
 # Documentación Swagger: /docs
 # Documentación Redocly: /redoc
 
