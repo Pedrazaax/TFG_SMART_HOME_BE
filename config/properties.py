@@ -12,6 +12,8 @@ API_ENDPOINT = os.getenv("API_ENDPOINT")
 ACCESS_ID = os.getenv("ACCESS_ID")
 ACCESS_KEY = os.getenv("ACCESS_KEY")
 
+print(API_ENDPOINT, ACCESS_ID, ACCESS_KEY)
+
 flag : bool = False
 
 def get_openapi_instance():

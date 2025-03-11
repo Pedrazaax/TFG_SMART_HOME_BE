@@ -7,7 +7,7 @@ from db.models.user import User
 from db.schemas.prueba_consumo import prueba_consumo_schema, tipo_prueba_schema, dispositivos_simulador_schema
 from asyncio import sleep
 from typing import List
-from main import SingletonOpenApi
+from config.main import SingletonOpenApi
 from service import device_service
 import time
 from datetime import datetime

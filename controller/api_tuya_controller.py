@@ -25,7 +25,7 @@ async def keys_api(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Usuario no autenticado"
             )
-    return await api_tuya_service.get_keysAPI(user.username)
+    return await api_tuya_service.get_keys_api(user.username)
 
 @app.post("/addKeys", response_model=KeysAPI)
 async def add_keys(
@@ -44,7 +44,7 @@ async def add_keys(
             )
     try:
         print("Autorización: ", authorization)
-        return await api_tuya_service.registerKeys(keys)
+        return await api_tuya_service.register_keys(keys)
     except Exception as e:
         print("Error al guardar las API keys (Controller): ", str(e))
         raise HTTPException(

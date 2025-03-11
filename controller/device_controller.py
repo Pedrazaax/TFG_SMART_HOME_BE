@@ -10,7 +10,7 @@ from bson import json_util
 from bson import ObjectId
 from pymongo.errors import PyMongoError
 from fastapi import APIRouter, HTTPException, status, Depends
-from main import SingletonOpenApi
+from config.main import SingletonOpenApi
 from controller.auth_users_controller import current_user
 from db.models.user import User
 from db.models.device import Device, Command
