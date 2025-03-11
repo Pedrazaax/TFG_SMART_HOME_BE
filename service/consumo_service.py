@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from db.client import client, clientConsumoLocal
 from db.models.prueba_consumo import TipoPrueba
 from db.models.user import User
-from db.schemas.prueba_consumo import pruebaConsumo_schema, tipoPrueba_schema, dispositivosSimulador_schema
+from db.schemas.prueba_consumo import prueba_consumo_schema, tipo_prueba_schema, dispositivos_simulador_schema
 from asyncio import sleep
 from typing import List
 from main import open_api_singleton
@@ -59,7 +59,7 @@ async def calculate_average_consumption(device_id: str, duration: int) -> tuple[
 
     return kwh, list_current, list_power, list_voltage
 
-async def create_pconsumo(pConsumo: pruebaConsumo_schema):
+async def create_pconsumo(pConsumo: prueba_consumo_schema):
     pConsumo_dict = dict(pConsumo)
     pConsumo_dict["prueba"] = tipoPrueba_to_dict(pConsumo_dict["prueba"])
 
@@ -98,17 +98,17 @@ async def create_pconsumo(pConsumo: pruebaConsumo_schema):
     del pConsumo_dict["idPrueba"]
 
     id = clientConsumoLocal.PruebasConsumo.insert_one(pConsumo_dict).inserted_id
-    new_pConsumo = pruebaConsumo_schema(clientConsumoLocal.PruebasConsumo.find_one({"_id": id}))
+    new_pConsumo = prueba_consumo_schema(clientConsumoLocal.PruebasConsumo.find_one({"_id": id}))
 
     return new_pConsumo
     
 
-async def create_tipo_prueba(tPrueba: tipoPrueba_schema):
+async def create_tipo_prueba(tPrueba: tipo_prueba_schema):
     tPrueba_dict = tipoPrueba_to_dict(tPrueba)
     del tPrueba_dict["idTipoPrueba"]
 
     id = client.TipoPrueba.insert_one(tPrueba_dict).inserted_id
-    new_tPrueba = tipoPrueba_schema(client.TipoPrueba.find_one({"_id": id}))
+    new_tPrueba = tipo_prueba_schema(client.TipoPrueba.find_one({"_id": id}))
 
     return new_tPrueba
 
@@ -131,7 +131,7 @@ async def get_dispositivos_simulador(user: User):
         print("Listando consumos de los dispositivos para el simulador")
 
         # Obtiene las pruebas de consumo de la base de datos del usuario
-        dispositivosSimulador = dispositivosSimulador_schema(client.simConsumos.find({"userName": user.username}))
+        dispositivosSimulador = dispositivos_simulador_schema(client.simConsumos.find({"userName": user.username}))
     
         if len(dispositivosSimulador) == 0:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No hay consumos para el simulador")

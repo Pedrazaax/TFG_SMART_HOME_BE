@@ -2,7 +2,7 @@
 
 from db.models.user import User
 from db.models.prueba_consumo import TipoPruebaLocal, PruebaConsumoLocal
-from db.schemas.prueba_consumo import tiposPruebaLocal_schema, pruebasConsumoLocal_schema
+from db.schemas.prueba_consumo import tipos_prueba_local_schema, pruebas_sonsumo_local_schema
 from fastapi import HTTPException, status
 from typing import List
 from asyncio import sleep
@@ -174,7 +174,7 @@ async def get_tprueba(user: User):
         print("Listando tipos de prueba")
 
         # Obtiene los tipos de prueba de la base de datos del usuario
-        tipoPruebaLocal = tiposPruebaLocal_schema(client.tipoPruebaLocal.find({"userName": user.username}))
+        tipoPruebaLocal = tipos_prueba_local_schema(client.tipoPruebaLocal.find({"userName": user.username}))
 
         if len(tipoPruebaLocal) == 0:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay tipos de prueba guardados")
@@ -190,7 +190,7 @@ async def get_pconsumo(user: User):
         print("Listando pruebas de consumo")
 
         # Obtiene las pruebas de consumo de la base de datos del usuario
-        pruebaConsumoLocal = pruebasConsumoLocal_schema(client.pruebaConsumoLocal.find({"userName": user.username}))
+        pruebaConsumoLocal = pruebas_sonsumo_local_schema(client.pruebaConsumoLocal.find({"userName": user.username}))
     
         if len(pruebaConsumoLocal) == 0:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No hay pruebas de consumo guardadas")

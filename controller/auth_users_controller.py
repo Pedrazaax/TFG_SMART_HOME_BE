@@ -44,8 +44,10 @@ async def current_user(user: User = Depends(auth_user)):
     Comprueba si el usuario está deshabilitado
     '''
     if user.disabled:
-        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, 
-                            detail="Usuario deshabilitado")
+        raise HTTPException(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            detail="Usuario deshabilitado"
+            )
 
     return user
 
