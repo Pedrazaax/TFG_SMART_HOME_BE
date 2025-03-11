@@ -1,7 +1,7 @@
 ### Clase Service de device ###
 
 from db.client import client
-from db.models.Device import Device
+from db.models.device import Device
 from db.schemas.device import device_schema
 from fastapi import HTTPException
 

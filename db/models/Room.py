@@ -1,8 +1,10 @@
-### Room model ###
+'''### Room model ###'''
 
-from pydantic import BaseModel
 from typing import Optional
+from pydantic import BaseModel
 
 class Room(BaseModel):
+    '''Modelo de habitación'''
     id: Optional[str]
     name: str
+    

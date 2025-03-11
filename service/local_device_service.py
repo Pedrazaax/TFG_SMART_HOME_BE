@@ -1,8 +1,8 @@
 ### Clase Service de dispositivos locales ###
 
 from db.models.user import User
-from db.models.PruebaConsumo import TipoPruebaLocal, PruebaConsumoLocal
-from db.schemas.pruebaConsumo import tiposPruebaLocal_schema, pruebasConsumoLocal_schema
+from db.models.prueba_consumo import TipoPruebaLocal, PruebaConsumoLocal
+from db.schemas.prueba_consumo import tiposPruebaLocal_schema, pruebasConsumoLocal_schema
 from fastapi import HTTPException, status
 from typing import List
 from asyncio import sleep

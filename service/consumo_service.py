@@ -2,17 +2,17 @@
 
 from fastapi import HTTPException, status
 from db.client import client, clientConsumoLocal
-from db.models.PruebaConsumo import TipoPrueba
+from db.models.prueba_consumo import TipoPrueba
 from db.models.user import User
-from db.schemas.pruebaConsumo import pruebaConsumo_schema, tipoPrueba_schema, dispositivosSimulador_schema
+from db.schemas.prueba_consumo import pruebaConsumo_schema, tipoPrueba_schema, dispositivosSimulador_schema
 from asyncio import sleep
 from typing import List
-from main import OpenApiSingleton
-from service import deviceService
+from main import open_api_singleton
+from service import device_service
 import time
 from datetime import datetime
 
-openapi = OpenApiSingleton.get_instance()
+openapi = open_api_singleton.get_instance()
 
 async def calculate_average_consumption(device_id: str, duration: int) -> tuple[float, List[float], List[float], List[float]]:
     kwh = 0
@@ -59,7 +59,7 @@ async def calculate_average_consumption(device_id: str, duration: int) -> tuple[
 
     return kwh, list_current, list_power, list_voltage
 
-async def createPConsumo(pConsumo: pruebaConsumo_schema):
+async def create_pconsumo(pConsumo: pruebaConsumo_schema):
     pConsumo_dict = dict(pConsumo)
     pConsumo_dict["prueba"] = tipoPrueba_to_dict(pConsumo_dict["prueba"])
 
@@ -74,7 +74,7 @@ async def createPConsumo(pConsumo: pruebaConsumo_schema):
         timeTotal += intervalo["time"]
 
         # Inicializamos el dispositivo con su estado
-        await deviceService.no_comillas(intervalo["status"])
+        await device_service.no_comillas(intervalo["status"])
         openapi.post('/v1.0/iot-03/devices/{}/commands'.format(pConsumo_dict["idDevice"]), {'commands': intervalo["status"]})
 
         # Calcular consumo del intervalo
@@ -103,7 +103,7 @@ async def createPConsumo(pConsumo: pruebaConsumo_schema):
     return new_pConsumo
     
 
-async def createTipoPrueba(tPrueba: tipoPrueba_schema):
+async def create_tipo_prueba(tPrueba: tipoPrueba_schema):
     tPrueba_dict = tipoPrueba_to_dict(tPrueba)
     del tPrueba_dict["idTipoPrueba"]
 
@@ -117,7 +117,7 @@ def tipoPrueba_to_dict(tPrueba: TipoPrueba) -> dict:
     tipo_dict["intervaloPrueba"] = [i.dict() for i in tPrueba.intervaloPrueba]
     return tipo_dict
 
-async def deletePConsumo(id: str):
+async def delete_pconsumo(id: str):
     try:
         print("ID: ", id)
         print("ID object: ", object(id))
@@ -126,7 +126,7 @@ async def deletePConsumo(id: str):
         print("Error (consumoService): ", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-async def get_dispositivosSimulador(user: User):
+async def get_dispositivos_simulador(user: User):
     try:
         print("Listando consumos de los dispositivos para el simulador")
 

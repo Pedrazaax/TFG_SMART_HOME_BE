@@ -1,13 +1,23 @@
+'''
+API RESTful - MyHomeIQ
+Descripción: API RESTful para la gestión de dispositivos y usuarios de la aplicación MyHomeIQ
+Autor: Carlos Pedraza Antona
+
+Iniciar servidor en local: python -m uvicorn app:app --reload
+Documentación Swagger: /docs
+Documentación Redocly: /redoc
+'''
+
 from fastapi import FastAPI
-#from fastapi.staticfiles import StaticFiles
-from controller import userController, auth_usersController, deviceController, consumoController, apiTuyaController, roomController, localDeviceController, localMeasuresController, historylogsController
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+from controller import api_tuya_controller, auth_users_controller
+from controller import user_controller, historylogs_controller
+from controller import local_device_controller, local_measures_controller
+from controller import consumo_controller, device_controller
+from controller import room_controller
 
-# Iniciar servidor en local: python -m uvicorn app:app --reload
-# Documentación Swagger: /docs
-# Documentación Redocly: /redoc
+app = FastAPI()
 
 # Configuración CORS settings
 app.add_middleware(
@@ -20,14 +30,12 @@ app.add_middleware(
 
 #Routers
 #app.mount("/static", StaticFiles(directory="static"), name="static")
-app.include_router(userController.app)
-app.include_router(auth_usersController.app)
-app.include_router(deviceController.app)
-app.include_router(consumoController.app)
-app.include_router(apiTuyaController.app)
-app.include_router(roomController.app)
-app.include_router(localDeviceController.app)
-app.include_router(localMeasuresController.app)
-app.include_router(historylogsController.app)
-
-
+app.include_router(user_controller.app)
+app.include_router(auth_users_controller.app)
+app.include_router(device_controller.app)
+app.include_router(consumo_controller.app)
+app.include_router(api_tuya_controller.app)
+app.include_router(room_controller.app)
+app.include_router(local_device_controller.app)
+app.include_router(local_measures_controller.app)
+app.include_router(historylogs_controller.app)

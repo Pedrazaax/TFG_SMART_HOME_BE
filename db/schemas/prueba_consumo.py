@@ -19,7 +19,7 @@ def tipoPrueba_schema(tipo) -> dict:
             "intervaloPrueba": [intervaloPrueba_schema(i) for i in tipo["intervaloPrueba"]]}
 
 
-def tipoPruebas_schema(tipos) -> list:
+def tipo_pruebas_schema(tipos) -> list:
     return [tipoPrueba_schema(tipo) for tipo in tipos]
 
 def pruebaConsumo_schema(pConsumo) -> dict:
@@ -33,7 +33,7 @@ def pruebaConsumo_schema(pConsumo) -> dict:
             "consumoMedio": pConsumo["consumoMedio"]}
             
 
-def pruebasConsumo_schema(psConsumo) -> list:
+def pruebas_consumo_schema(psConsumo) -> list:
     return [pruebaConsumo_schema(pConsumo) for pConsumo in psConsumo]
 
 def tipoPruebaLocal_schema(tipo) -> dict:
