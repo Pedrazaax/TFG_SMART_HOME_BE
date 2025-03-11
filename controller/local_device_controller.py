@@ -52,7 +52,7 @@ async def save_token(data: dict, user: User = Depends(current_user)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Dominio inválido")
 
     try:
-        await local_device_service.save_homeAssistant(token, dominio, user)
+        await local_device_service.save_home_assistant(token, dominio, user)
         return user.homeAssistant
     except Exception as e:
         print("Error (localDeviceController): ", e)
@@ -303,7 +303,7 @@ async def get_scripts(user: User = Depends(current_user)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dominio no encontrado")
 
     try:
-        scripts = await local_device_service.listAll(token, dominio)
+        scripts = await local_device_service.list_all(token, dominio)
         return scripts
     except Exception as e:
         print("Error (localDeviceController): ", e)

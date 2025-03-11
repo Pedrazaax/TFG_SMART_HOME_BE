@@ -1,4 +1,7 @@
-'''### Clase Service de keys API TUYA ###'''
+'''
+### Clase Service de keys API TUYA ###
+Descripción: Se encarga de gestionar las API keys de los usuarios.
+'''
 
 from db.client import client
 from db.models.keys_api import KeysAPI
@@ -27,7 +30,7 @@ async def get_keys_api(username: str):
             detail="No se han encontrado API keys para este usuario"
             ) from e
 
-async def register_keys(keys: KeysAPI, response_model=KeysAPI):
+async def register_keys(keys: KeysAPI):
     '''
     Registra las API keys de un usuario.
     '''

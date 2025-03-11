@@ -1,20 +1,28 @@
-### Clase Service de consumo ###
+'''### Clase Service de consumo ###'''
 
+import time
+from datetime import datetime
+from asyncio import sleep
+from typing import List
 from fastapi import HTTPException, status
 from db.client import client, clientConsumoLocal
 from db.models.prueba_consumo import TipoPrueba
 from db.models.user import User
-from db.schemas.prueba_consumo import prueba_consumo_schema, tipo_prueba_schema, dispositivos_simulador_schema
-from asyncio import sleep
-from typing import List
+from db.schemas.prueba_consumo import prueba_consumo_schema
+from db.schemas.prueba_consumo import tipo_prueba_schema
+from db.schemas.prueba_consumo import dispositivos_simulador_schema
 from config.main import SingletonOpenApi
 from service import device_service
-import time
-from datetime import datetime
 
-openapi = SingletonOpenApi.get_instance()
+OPEN_API = SingletonOpenApi.get_instance()
 
-async def calculate_average_consumption(device_id: str, duration: int) -> tuple[float, List[float], List[float], List[float]]:
+async def calculate_average_consumption(
+        device_id: str,
+        duration: int
+        ) -> tuple[float, List[float], List[float], List[float]]:
+    '''
+    Calcula el consumo medio de un dispositivo en un intervalo de tiempo.
+    '''
     kwh = 0
     total_current = 0
     total_power = 0
@@ -26,10 +34,10 @@ async def calculate_average_consumption(device_id: str, duration: int) -> tuple[
 
     start_time = time.time()
     while time.time() - start_time < duration:
-        response = openapi.get(f'/v1.0/iot-03/devices/status?device_ids={device_id}')
-        status = response["result"][0]["status"]
-       
-        for item in status:
+        response = OPEN_API.get(f'/v1.0/iot-03/devices/status?device_ids={device_id}')
+        status_response = response["result"][0]["status"]
+
+        for item in status_response:
             if item['code'] == 'cur_current':
                 # Guardar lista de valores de current
                 list_current.append(item['value'])
@@ -59,86 +67,117 @@ async def calculate_average_consumption(device_id: str, duration: int) -> tuple[
 
     return kwh, list_current, list_power, list_voltage
 
-async def create_pconsumo(pConsumo: prueba_consumo_schema):
-    pConsumo_dict = dict(pConsumo)
-    pConsumo_dict["prueba"] = tipoPrueba_to_dict(pConsumo_dict["prueba"])
+async def create_pconsumo(p_consumo: prueba_consumo_schema):
+    '''
+    Crea una prueba de consumo en la base de datos local. 
+    '''
+    p_consumo_dict = dict(p_consumo)
+    p_consumo_dict["prueba"] = tipo_prueba_to_dict(p_consumo_dict["prueba"])
 
-    timeTotal = 0
-    consumoSuma = 0
-    consumoMedio = 0
+    time_total = 0
+    consumo_suma = 0
+    consumo_medio = 0
 
     # Recorremos la lista de intervalos
-    for intervalo in pConsumo_dict["prueba"]["intervaloPrueba"]:
+    for intervalo in p_consumo_dict["prueba"]["intervaloPrueba"]:
 
         # Calculamos el tiempo total de la prueba
-        timeTotal += intervalo["time"]
+        time_total += intervalo["time"]
 
         # Inicializamos el dispositivo con su estado
         await device_service.no_comillas(intervalo["status"])
-        openapi.post('/v1.0/iot-03/devices/{}/commands'.format(pConsumo_dict["idDevice"]), {'commands': intervalo["status"]})
+        OPEN_API.post(
+            f'/v1.0/iot-03/devices/{p_consumo_dict["idDevice"]}/commands',
+            {'commands': intervalo["status"]}
+            )
 
         # Calcular consumo del intervalo
-        intervalo["consumo"], intervalo["current"], intervalo["power"], intervalo["voltage"] = await calculate_average_consumption(pConsumo_dict["idSocket"], intervalo["time"])
+        intervalo["consumo"], intervalo["current"], intervalo["power"], intervalo["voltage"] = await calculate_average_consumption(p_consumo_dict["idSocket"], intervalo["time"])
 
         # Sumatorio total de los consumos de todos los intervalos
-        consumoSuma += intervalo["consumo"]
+        consumo_suma += intervalo["consumo"]
 
         # Apagar el dispositivo
-        openapi.post(f'/v1.0/iot-03/devices/{pConsumo_dict["idDevice"]}/commands', {'commands': [{'code': 'switch_led', 'value': False}]})
-    
+        OPEN_API.post(
+            f'/v1.0/iot-03/devices/{p_consumo_dict["idDevice"]}/commands',
+            {'commands': [{'code': 'switch_led', 'value': False}]}
+            )
+
     # Calculamos el consumo medio y lo guardamos en el diccionario junto al tiempo total.
-    consumoMedio = consumoSuma/len(pConsumo_dict["prueba"]["intervaloPrueba"])
-    pConsumo_dict["timeTotal"] = timeTotal
-    pConsumo_dict["consumoMedio"] = consumoMedio
+    consumo_medio = consumo_suma/len(p_consumo_dict["prueba"]["intervaloPrueba"])
+    p_consumo_dict["timeTotal"] = time_total
+    p_consumo_dict["consumoMedio"] = consumo_medio
 
-    print(datetime.now())
     now = datetime.now()
-    pConsumo_dict["dateTime"] = str(now)
+    p_consumo_dict["dateTime"] = str(now)
 
-    del pConsumo_dict["idPrueba"]
+    del p_consumo_dict["idPrueba"]
 
-    id = clientConsumoLocal.PruebasConsumo.insert_one(pConsumo_dict).inserted_id
-    new_pConsumo = prueba_consumo_schema(clientConsumoLocal.PruebasConsumo.find_one({"_id": id}))
+    _id = clientConsumoLocal.PruebasConsumo.insert_one(p_consumo_dict).inserted_id
+    new_pconsumo = prueba_consumo_schema(clientConsumoLocal.PruebasConsumo.find_one({"_id": _id}))
 
-    return new_pConsumo
-    
+    return new_pconsumo
 
-async def create_tipo_prueba(tPrueba: tipo_prueba_schema):
-    tPrueba_dict = tipoPrueba_to_dict(tPrueba)
-    del tPrueba_dict["idTipoPrueba"]
+async def create_tipo_prueba(t_prueba: tipo_prueba_schema):
+    '''
+    Crear un tipo de prueba en la base de datos local.
+    '''
+    t_prueba_dict = tipo_prueba_to_dict(t_prueba)
+    del t_prueba_dict["idTipoPrueba"]
 
-    id = client.TipoPrueba.insert_one(tPrueba_dict).inserted_id
-    new_tPrueba = tipo_prueba_schema(client.TipoPrueba.find_one({"_id": id}))
+    _id = client.TipoPrueba.insert_one(t_prueba_dict).inserted_id
+    new_t_prueba = tipo_prueba_schema(client.TipoPrueba.find_one({"_id": _id}))
 
-    return new_tPrueba
+    return new_t_prueba
 
-def tipoPrueba_to_dict(tPrueba: TipoPrueba) -> dict:
-    tipo_dict = tPrueba.dict()
-    tipo_dict["intervaloPrueba"] = [i.dict() for i in tPrueba.intervaloPrueba]
+def tipo_prueba_to_dict(t_prueba: TipoPrueba) -> dict:
+    '''
+    Convierte un objeto de tipo TipoPrueba a un diccionario.
+    '''
+    tipo_dict = t_prueba.dict()
+    tipo_dict["intervaloPrueba"] = [i.dict() for i in t_prueba.intervaloPrueba]
     return tipo_dict
 
-async def delete_pconsumo(id: str):
+async def delete_pconsumo(_id: str):
+    '''
+    Elimina una prueba de consumo de la base de datos local.
+    '''
     try:
-        print("ID: ", id)
-        print("ID object: ", object(id))
-        client.PruebasConsumo.delete_one({"idTipoPrueba": id})
+        print("ID: ", _id)
+        print("ID object: ", object(_id))
+        client.PruebasConsumo.delete_one({"idTipoPrueba": _id})
     except Exception as e:
         print("Error (consumoService): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+            ) from e
 
 async def get_dispositivos_simulador(user: User):
+    '''
+    Obtiene los consumos de los dispositivos para el simulador.
+    '''
     try:
         print("Listando consumos de los dispositivos para el simulador")
 
         # Obtiene las pruebas de consumo de la base de datos del usuario
-        dispositivosSimulador = dispositivos_simulador_schema(client.simConsumos.find({"userName": user.username}))
-    
-        if len(dispositivosSimulador) == 0:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No hay consumos para el simulador")
+        dispositivos_simulador = dispositivos_simulador_schema(
+            client.simConsumos.find({"userName": user.username})
+            )
+
+        if len(dispositivos_simulador) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No hay consumos para el simulador"
+                )
         else:
-            return dispositivosSimulador
+            return dispositivos_simulador
     except HTTPException as e:
         raise e
     except Exception as e:
         print("Error (localDeviceService): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+            ) from e
+    

@@ -1,17 +1,24 @@
+'''
 ### Clase Service de dispositivos locales ###
+Descripción: Este fichero contiene la lógica de negocio de los dispositivos locales.
+Funciones necesarias para guardar, listar y eliminar los tipos de prueba y pruebas de consumo.
+También contiene las funciones necesarias para guardar el token y dominio de Home Assistant.
+'''
 
+from typing import List
+from asyncio import sleep
+import math
+import time
+from datetime import datetime
+import httpx
+from bson import ObjectId
+
+from db.client import client
 from db.models.user import User
 from db.models.prueba_consumo import TipoPruebaLocal, PruebaConsumoLocal
 from db.schemas.prueba_consumo import tipos_prueba_local_schema, pruebas_sonsumo_local_schema
+
 from fastapi import HTTPException, status
-from typing import List
-from asyncio import sleep
-import time
-from datetime import datetime
-from db.client import client
-from bson import ObjectId
-import httpx
-import math
 
 # URLs para las peticiones
 CURRENT_URL = "https://gsyaiot.me/api/states/sensor.athom_smart_plug_v2_9d8b76_current"
@@ -24,10 +31,13 @@ EB20_CURRENT = 0.07
 EB20_ENERGY = 0
 EB20_POWER = 9
 
-async def save_homeAssistant(token: str, dominio: str, user: User):
+async def save_home_assistant(token: str, dominio: str, user: User):
+    '''
+    Guarda el token y dominio de Home Assistant en la base de datos del usuario.
+    '''
     try:
         # Crear tupla homeAssistant
-        homeAssistant = (token, dominio)
+        home_assistant = (token, dominio)
 
         # Comprueba si el usuario tiene ya token y dominio
         if user.homeAssistant is not None:
@@ -35,14 +45,23 @@ async def save_homeAssistant(token: str, dominio: str, user: User):
             user.homeAssistant.clear()
         else:
             # Guarda la nueva tupla guardando el token y dominio
-            user.homeAssistant = homeAssistant
-            client.users.update_one({"_id": ObjectId(user.id)}, {"$set": {"homeAssistant": user.homeAssistant}})
+            user.homeAssistant = home_assistant
+            client.users.update_one(
+                {"_id": ObjectId(user.id)},
+                {"$set": {"homeAssistant": user.homeAssistant}}
+                )
 
     except Exception as e:
         print("Error (localDeviceService): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+            ) from e
+
 async def validate_domain(dominio: str, user: User):
+    '''
+    Valida el dominio de Home Assistant
+    '''
     try:
         # Declaración de flag de tipo booleano
         flag: bool = True
@@ -52,8 +71,9 @@ async def validate_domain(dominio: str, user: User):
             print('Dominio', dominio)
             print("Dominio no empieza por http:// o https://")
             flag = False
-            
-        # Comprueba que después de http:// o https:// haya algún carácter, luego un punto y de nuevo caracter
+
+        # Comprueba que después de http:// o https:// haya algún carácter,
+        # luego un punto y de nuevo caracter
         if not dominio[7:].split(".")[0] or not dominio[7:].split(".")[1]:
             print('Dominio', dominio)
             print("Dominio no tiene caracteres después de http:// o https://")
@@ -62,17 +82,25 @@ async def validate_domain(dominio: str, user: User):
         # Si el dominio acaba en / se le quita y se guarda el nuevo dominio
         if dominio.endswith("/"):
             dominio = dominio[:-1]
-            client.users.update_one({"_id": ObjectId(user.id)}, {"$set": {"homeAssistant.dominio": dominio}})
+            client.users.update_one(
+                {"_id": ObjectId(user.id)},
+                {"$set": {"homeAssistant.dominio": dominio}}
+                )
 
         return flag
 
     except Exception as e:
         print("Error (localDeviceService): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+            ) from e
+
 async def check_name(name: str, user: User, key: str):
+    '''
+    Comprueba si el nombre ya existe en la base de datos
+    '''
     try:
-        # Comprueba si el nombre ya existe en la base de datos
         if key == "pConsumo":
             if client.pruebaConsumoLocal.find_one({"userName": user.username, "name": name}):
                 return True
@@ -88,13 +116,18 @@ async def check_name(name: str, user: User, key: str):
 
     except Exception as e:
         print("Error (localDeviceService): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+            ) from e
 
-    
-async def listAll(token: str, dominio: str):
+async def list_all(token: str, dominio: str):
+    '''
+    Lista todos los scripts de Home Assistant
+    '''
     try:
         print("Listando scripts")
-        
+
         # Inicialización de HTTP Headers con token bearer
         headers = {
             "Authorization": f"Bearer {token}",
@@ -105,17 +138,23 @@ async def listAll(token: str, dominio: str):
         url = f"{dominio}/api/states"
 
         # Petición GET a la API de Home Assistant
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers)
-            response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
-            responseJson = response.json()  # Parsea la respuesta JSON a un objeto Python
-            return responseJson
-        
+        async with httpx.AsyncClient() as client_api:
+            response = await client_api.get(url, headers=headers)
+            response.raise_for_status()  # Excepción en caso de error
+            response_json = response.json()  # Parsea la respuesta JSON a un objeto Python
+            return response_json
+
     except Exception as e:
         print("Error (localDeviceService): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+            ) from e
+
 async def save_tprueba(data: dict, user: User):
+    '''
+    Guarda el tipo de prueba en la base de datos
+    '''
     try:
         print("Guardando tipo de prueba")
 
@@ -126,7 +165,7 @@ async def save_tprueba(data: dict, user: User):
         intervalos = data.get('intervalos')
 
         # Creación de objeto TipoPruebaLocal
-        tipoPruebaLocal = TipoPruebaLocal(
+        tipo_prueba_local = TipoPruebaLocal(
             userName=user.username,
             name=name,
             category=category,
@@ -135,15 +174,21 @@ async def save_tprueba(data: dict, user: User):
         )
 
         # Guarda el objeto en la base de datos
-        client.tipoPruebaLocal.insert_one(tipoPruebaLocal.dict())
+        client.tipoPruebaLocal.insert_one(tipo_prueba_local.dict())
 
-        return tipoPruebaLocal
-        
+        return tipo_prueba_local
+
     except Exception as e:
         print("Error (localDeviceService): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+            ) from e
+
 async def delete_tprueba(name: str, user: User):
+    '''
+    Elimina el tipo de prueba de la base de datos
+    '''
     try:
         print("Borrando tipo de prueba")
 
@@ -151,12 +196,18 @@ async def delete_tprueba(name: str, user: User):
         client.tipoPruebaLocal.delete_one({"userName": user.username, "name": name})
 
         return {"message": "Tipo de prueba eliminado"}
-        
+
     except Exception as e:
         print("Error (localDeviceService): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+            ) from e
 
 async def delete_pconsumo(name: str, user: User):
+    '''
+    Elimina la prueba de consumo de la base de datos
+    '''
     try:
         print("Borrando prueba de consumo")
 
@@ -164,49 +215,74 @@ async def delete_pconsumo(name: str, user: User):
         client.pruebaConsumoLocal.delete_one({"userName": user.username, "name": name})
 
         return {"message": "Prueba de consumo eliminada"}
-        
+
     except Exception as e:
         print("Error (localDeviceService): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+            ) from e
+
 async def get_tprueba(user: User):
+    '''
+    Obtiene los tipos de prueba de la base de datos
+    '''
     try:
         print("Listando tipos de prueba")
 
         # Obtiene los tipos de prueba de la base de datos del usuario
-        tipoPruebaLocal = tipos_prueba_local_schema(client.tipoPruebaLocal.find({"userName": user.username}))
+        tipo_prueba_local = tipos_prueba_local_schema(
+            client.tipoPruebaLocal.find({"userName": user.username})
+            )
 
-        if len(tipoPruebaLocal) == 0:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay tipos de prueba guardados")
+        if len(tipo_prueba_local) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No hay tipos de prueba guardados"
+                )
 
-        return tipoPruebaLocal
-        
+        return tipo_prueba_local
+
     except Exception as e:
         print("Error (localDeviceService): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+            ) from e
+
 async def get_pconsumo(user: User):
+    '''
+    Obtiene las pruebas de consumo de la base de datos
+    '''
     try:
         print("Listando pruebas de consumo")
 
         # Obtiene las pruebas de consumo de la base de datos del usuario
-        pruebaConsumoLocal = pruebas_sonsumo_local_schema(client.pruebaConsumoLocal.find({"userName": user.username}))
-    
-        if len(pruebaConsumoLocal) == 0:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No hay pruebas de consumo guardadas")
+        prueba_consumo_local = pruebas_sonsumo_local_schema(
+            client.pruebaConsumoLocal.find({"userName": user.username})
+            )
+
+        if len(prueba_consumo_local) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No hay pruebas de consumo guardadas"
+                )
         else:
-            return pruebaConsumoLocal
+            return prueba_consumo_local
     except HTTPException as e:
         raise e
     except Exception as e:
         print("Error (localDeviceService): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+            ) from e
 
 async def save_pconsumo(data: dict, user: User):
+    '''
+    Guarda la prueba de consumo en la base de datos
+    '''
     try:
-
-        # Data:  {'name': 'a', 'category': 'light', 'hub': {'be': True, 'pulgadas': 7, 'rel_ancho': 16, 'rel_alto': 9, 't_pantalla': 'LCD'} ,'device': 'light.smart_bulb_tuya_1', 'tipoPrueba': 'Prueba1', 'socket': 'switch.smart_plug_tuya_1'}
-
         print("Guardando prueba de consumo")
 
         # Inicialización de variables
@@ -306,7 +382,7 @@ async def save_pconsumo(data: dict, user: User):
         #        "entity_id": "script.eb19"
         #    }
         #    response = await cliente.post(url, headers=headers, json=body)
-        #    response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
+        #    response.raise_for_status()  
         
         if category == "climate":
             # Apagar termostatos
@@ -315,7 +391,7 @@ async def save_pconsumo(data: dict, user: User):
                     "entity_id": "script.ts7" # Apaga termostatos
                 }
                 response = await cliente.post(url, headers=headers, json=body)
-                response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
+                response.raise_for_status()
 
         if category == "camera":
             async with httpx.AsyncClient() as cliente:
@@ -323,13 +399,16 @@ async def save_pconsumo(data: dict, user: User):
                     "entity_id": "script.c1" # Apaga cámaras
                 }
                 response = await cliente.post(url, headers=headers, json=body)
-                response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
+                response.raise_for_status()
                 
         return pruebaConsumoLocal
         
     except Exception as e:
         print("Error (localDeviceService): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+            ) from e
     
 async def calculate_average_consumption(duration: int, headers: dict, enchufe: str) -> tuple[float, List[float], List[float], List[float], List[float]]:
     print("Esperando 15 segundos...")
@@ -586,7 +665,6 @@ def getMediaPlayerWithOutScreenEEI(dispositivo):
 
 async def save_measuresData(data):
     try:
-        # Data:  [{"device": "light.smart_bulb_2","estado": "Global","consumoMedio": 0.005231897341888171,"potenciaMedia": 8.997891842346474,"intensidadMedia": 0.0700000000000002,"etiqueta": "G"},{"device": "light.smart_bulb_tuya_1", ...
         print("Guardando mediciones globales de los consumos")
 
         class mediciones_dispositivo:
@@ -612,7 +690,14 @@ async def save_measuresData(data):
         if nueva_coleccion in client.list_collection_names():
             client[nueva_coleccion].delete_many({})
         resultado = client[nueva_coleccion].insert_many(mediciones_dispositivos_dict)
-        print("Datos de mediciones globales de los consumos guardados con exito: ", resultado.inserted_ids)
+        print(
+            "Datos de mediciones globales de los consumos guardados con exito: ",
+            resultado.inserted_ids
+            )
     except Exception as e:
         print("Error (localDeviceService.save_measuresData): ", e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+            ) from e
+    
