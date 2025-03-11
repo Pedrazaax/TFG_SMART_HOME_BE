@@ -24,9 +24,9 @@ async def update_measurements(user: User = Depends(current_user)):
     try:
         pconsumos = await local_device_service.get_pconsumo(user)
         dispositivos = await local_device_service.sort_pconsumos(pconsumos)
-        await local_device_service.getAllGlobalAverageMeasures(dispositivos)
+        await local_device_service.get_all_global_average_measures(dispositivos)
         await local_device_service.getEEI(dispositivos)
-        await local_device_service.save_measuresData(dispositivos)
+        await local_device_service.save_measures_data(dispositivos)
         return dispositivos
     except HTTPException as e:
         raise e

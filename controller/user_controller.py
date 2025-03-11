@@ -81,7 +81,7 @@ async def register_user(user_req: User):
     '''
 
     # Email correcto
-    if not user_service.validarEmail(user_req.email):
+    if not user_service.validar_email(user_req.email):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="El formato del email no es correcto"

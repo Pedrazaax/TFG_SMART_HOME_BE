@@ -5,6 +5,8 @@ Funciones necesarias para guardar, listar y eliminar los tipos de prueba y prueb
 También contiene las funciones necesarias para guardar el token y dominio de Home Assistant.
 '''
 
+from fastapi import HTTPException, status
+
 from typing import List
 from asyncio import sleep
 import math
@@ -17,8 +19,6 @@ from db.client import client
 from db.models.user import User
 from db.models.prueba_consumo import TipoPruebaLocal, PruebaConsumoLocal
 from db.schemas.prueba_consumo import tipos_prueba_local_schema, pruebas_sonsumo_local_schema
-
-from fastapi import HTTPException, status
 
 # URLs para las peticiones
 CURRENT_URL = "https://gsyaiot.me/api/states/sensor.athom_smart_plug_v2_9d8b76_current"
@@ -286,9 +286,9 @@ async def save_pconsumo(data: dict, user: User):
         print("Guardando prueba de consumo")
 
         # Inicialización de variables
-        timeTotal = 0
+        time_total = 0
         consumos = []
-        consumoMedio = 0
+        consumo_medio = 0
 
         # Inicialización de HTTP Headers con token bearer
         headers = {
@@ -304,17 +304,19 @@ async def save_pconsumo(data: dict, user: User):
         category = data.get('category')
         hub = data.get('hub')
         device = data.get('device')
-        tipoPrueba = data.get('tipoPrueba')
+        tipo_prueba = data.get('tipoPrueba')
         enchufe = data.get('socket')
 
         # Obtiene el tipo de prueba de la base de datos
-        tipoPrueba = client.tipoPruebaLocal.find_one({"userName": user.username, "name": tipoPrueba})
+        tipo_prueba = client.tipoPruebaLocal.find_one(
+            {"userName": user.username, "name": tipo_prueba}
+            )
 
-        print("Tipo de prueba: ", tipoPrueba)
+        print("Tipo de prueba: ", tipo_prueba)
 
         # Obtiene los intervalos del tipo de prueba
         intervalos = []
-        for intervalo in tipoPrueba["intervalos"]:
+        for intervalo in tipo_prueba["intervalos"]:
             intervalos.append(intervalo)
 
         if enchufe == "switch.athom_smart_plug_v2_9d8b76_smart_plug_v2":
@@ -324,8 +326,8 @@ async def save_pconsumo(data: dict, user: User):
                     "entity_id": "script.eb20"
                 }
                 response = await cliente.post(url, headers=headers, json=body)
-                response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
-        
+                response.raise_for_status()
+
         print("Esperando 10 segundos...")
         # Espera 10 segundos
         await sleep(10)
@@ -334,10 +336,13 @@ async def save_pconsumo(data: dict, user: User):
         for intervalo in intervalos:
             # Comprueba que el tiempo del intervalo sea mayor que 0
             if intervalo["time"] <= 0:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El tiempo del intervalo debe ser mayor que 0")
-            
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="El tiempo del intervalo debe ser mayor que 0"
+                    )
+
             # Calculamos el tiempo total de la prueba
-            timeTotal += intervalo["time"]
+            time_total += intervalo["time"]
 
             # Inicializamos el dispositivo con su estado
             async with httpx.AsyncClient() as cliente:
@@ -345,8 +350,8 @@ async def save_pconsumo(data: dict, user: User):
                     "entity_id": intervalo["script"]
                 }
                 response = await cliente.post(url, headers=headers, json=body)
-                response.raise_for_status()  # Esto lanzará una excepción si la respuesta tiene un status code de error
-            
+                response.raise_for_status()
+
             # Calcular consumo del intervalo
             intervalo["consumo"], intervalo["current"], intervalo["voltage"], intervalo["energy"], intervalo["power"] = await calculate_average_consumption(intervalo["time"], headers, enchufe)
 
@@ -354,36 +359,35 @@ async def save_pconsumo(data: dict, user: User):
             consumos.append(intervalo["consumo"])
 
         # Calculamos el consumo medio
-        consumoMedio = sum(consumos) / len(consumos)
+        consumo_medio = sum(consumos) / len(consumos)
 
         # Creación de objeto PruebaConsumo
-        pruebaConsumoLocal = PruebaConsumoLocal(
+        prueba_consumo_local = PruebaConsumoLocal(
             userName=user.username,
             name=name,
             category=category,
             hub=hub,
             device=device,
-            tipoPrueba=tipoPrueba,
+            tipoPrueba=tipo_prueba,
             socket=enchufe,
-            timeTotal=timeTotal,
-            consumoMedio=consumoMedio,
+            timeTotal=time_total,
+            consumoMedio=consumo_medio,
             dateTime=str(datetime.now())
         )
 
-        print("Prueba de consumo: ", pruebaConsumoLocal.json())
+        print("Prueba de consumo: ", prueba_consumo_local.json())
 
         # Guarda el objeto en la base de datos
-        client.pruebaConsumoLocal.insert_one(pruebaConsumoLocal.dict())
+        client.pruebaConsumoLocal.insert_one(prueba_consumo_local.dict())
 
-        
         # Apagar las bombillas
         # async with httpx.AsyncClient() as cliente:
         #    body = {
         #        "entity_id": "script.eb19"
         #    }
         #    response = await cliente.post(url, headers=headers, json=body)
-        #    response.raise_for_status()  
-        
+        #    response.raise_for_status()
+
         if category == "climate":
             # Apagar termostatos
             async with httpx.AsyncClient() as cliente:
@@ -400,20 +404,27 @@ async def save_pconsumo(data: dict, user: User):
                 }
                 response = await cliente.post(url, headers=headers, json=body)
                 response.raise_for_status()
-                
-        return pruebaConsumoLocal
-        
+
+        return prueba_consumo_local
+
     except Exception as e:
         print("Error (localDeviceService): ", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
             ) from e
-    
-async def calculate_average_consumption(duration: int, headers: dict, enchufe: str) -> tuple[float, List[float], List[float], List[float], List[float]]:
+
+async def calculate_average_consumption(
+        duration: int,
+        headers: dict,
+        enchufe: str
+        ) -> tuple[float, List[float], List[float], List[float], List[float]]:
+    '''
+    Calcula el consumo medio de un dispositivo
+    '''
     print("Esperando 15 segundos...")
     await sleep(15)
-    
+
     print("Calculando consumos")
 
     total_current = 0
@@ -428,24 +439,24 @@ async def calculate_average_consumption(duration: int, headers: dict, enchufe: s
 
     start_time = time.time()
     while time.time() - start_time < duration:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient() as client_api:
             # Petición para obtener el current
-            response_current = await client.get(CURRENT_URL, headers=headers)
+            response_current = await client_api.get(CURRENT_URL, headers=headers)
             response_current.raise_for_status()
             current = response_current.json()["state"]
 
             # Petición para obtener el voltage
-            response_voltage = await client.get(VOLTAGE_URL, headers=headers)
+            response_voltage = await client_api.get(VOLTAGE_URL, headers=headers)
             response_voltage.raise_for_status()
             voltage = response_voltage.json()["state"]
 
             # Petición para obtener el energy
-            response_energy = await client.get(ENERGY_URL, headers=headers)
+            response_energy = await client_api.get(ENERGY_URL, headers=headers)
             response_energy.raise_for_status()
             energy = response_energy.json()["state"]
 
             # Petición para obtener el power
-            response_power = await client.get(POWER_URL, headers=headers)
+            response_power = await client_api.get(POWER_URL, headers=headers)
             response_power.raise_for_status()
             power = response_power.json()["state"]
 
@@ -480,46 +491,52 @@ async def calculate_average_consumption(duration: int, headers: dict, enchufe: s
     return media_energy, list_current, list_voltage, list_energy, list_power
 
 async def sort_pconsumos(pconsumos):
+    '''
+    Ordena las pruebas de consumo por dispositivo
+    '''
     # Crear un conjunto para rastrear los valores ya vistos
     dispositivos_vistos = set()
     # Crear una lista para los objetos únicos
     dispositivos = []
 
     for pconsumo in pconsumos:
-            if pconsumo['device'] not in dispositivos_vistos:
-                if "hub" not in pconsumo['tipoPrueba']:
-                    dispositivos.append({
-                        "userName":pconsumo['userName'],
-                        "device":pconsumo['device'],
-                        "estado":"",
-                        "consumoMedio":0,
-                        "potenciaMedia":0,
-                        "intensidadMedia":0,
-                        "etiqueta":"",
-                        "pruebas":[pconsumo]
-                    })
-                    dispositivos_vistos.add(pconsumo['device'])
-                else:
-                    dispositivos.append({
-                        "userName":pconsumo['userName'],
-                        "device":pconsumo['device'],
-                        "hub":pconsumo['tipoPrueba']['hub'],
-                        "estado":"",
-                        "consumoMedio":0,
-                        "potenciaMedia":0,
-                        "intensidadMedia":0,
-                        "etiqueta":"",
-                        "pruebas":[pconsumo]
-                    })
-                    dispositivos_vistos.add(pconsumo['device'])
+        if pconsumo['device'] not in dispositivos_vistos:
+            if "hub" not in pconsumo['tipoPrueba']:
+                dispositivos.append({
+                    "userName":pconsumo['userName'],
+                    "device":pconsumo['device'],
+                    "estado":"",
+                    "consumoMedio":0,
+                    "potenciaMedia":0,
+                    "intensidadMedia":0,
+                    "etiqueta":"",
+                    "pruebas":[pconsumo]
+                })
+                dispositivos_vistos.add(pconsumo['device'])
             else:
-                for dispositivo in dispositivos:
-                    if dispositivo['device'] == pconsumo['device']:
-                        dispositivo['pruebas'].append(pconsumo)
-                        break
+                dispositivos.append({
+                    "userName":pconsumo['userName'],
+                    "device":pconsumo['device'],
+                    "hub":pconsumo['tipoPrueba']['hub'],
+                    "estado":"",
+                    "consumoMedio":0,
+                    "potenciaMedia":0,
+                    "intensidadMedia":0,
+                    "etiqueta":"",
+                    "pruebas":[pconsumo]
+                })
+                dispositivos_vistos.add(pconsumo['device'])
+        else:
+            for dispositivo in dispositivos:
+                if dispositivo['device'] == pconsumo['device']:
+                    dispositivo['pruebas'].append(pconsumo)
+                    break
     return dispositivos
 
-async def getAllGlobalAverageMeasures(dispositivos):
+async def get_all_global_average_measures(dispositivos):
+    '''
+    Calcula las medidas globales de los consumos
+    '''
     for dispositivo in dispositivos:
         total_energy=0
         total_power=0
@@ -536,36 +553,42 @@ async def getAllGlobalAverageMeasures(dispositivos):
                 num_current_values += len(intervalo['current'])
                 num_energy_values += len(intervalo['energy'])
                 num_power_values += len(intervalo['power'])
-                
-        num_pruebas = len(dispositivo['pruebas'])
+
+        # num_pruebas = len(dispositivo['pruebas'])
 
         dispositivo['consumoMedio'] = total_energy / num_energy_values
         dispositivo['potenciaMedia'] = total_power / num_power_values
         dispositivo['intensidadMedia'] = total_current / num_current_values
         dispositivo['estado'] = "Global"
         del dispositivo['pruebas']
-        
+
     return dispositivos
 
-async def getEEI(dispositivos):
+async def get_eei(dispositivos):
+    '''
+    Calcula el EEI de los dispositivos
+    '''
     for dispositivo in dispositivos:
-        if(dispositivo['device'].split('.')[0] == 'light'):
-            getLightEEI(dispositivo)
-        elif(dispositivo['device'].split('.')[0] == 'camera'):
-            getCameraEEI(dispositivo)
-        elif(dispositivo['device'].split('.')[0] == 'climate'):
-            getClimateEEI(dispositivo)
-        elif(dispositivo['device'].split('.')[0] == 'media_player'):
+        if dispositivo['device'].split('.')[0] == 'light':
+            get_light_eei(dispositivo)
+        elif dispositivo['device'].split('.')[0] == 'camera':
+            get_camera_eei(dispositivo)
+        elif dispositivo['device'].split('.')[0] == 'climate':
+            get_climate_eei(dispositivo)
+        elif dispositivo['device'].split('.')[0] == 'media_player':
             if not isinstance(dispositivo['hub'],bool):
-                getMediaPlayerWithScreenEEI(dispositivo)
+                get_media_player_with_screen_eei(dispositivo)
             else:
-                getMediaPlayerWithOutScreenEEI(dispositivo)
+                get_media_player_with_out_screen_eei(dispositivo)
 
-def getLightEEI(dispositivo):
+def get_light_eei(dispositivo):
+    '''
+    Calcula el EEI de las luces
+    '''
     lm = 806
     ftm = 0.926
     eei = (lm / dispositivo['potenciaMedia']) * ftm
-    
+
     if eei >= 210:
         dispositivo['etiqueta'] = "A"
     elif 185 <= eei < 210:
@@ -581,9 +604,12 @@ def getLightEEI(dispositivo):
     else:
         dispositivo['etiqueta'] = "G"
 
-def getCameraEEI(dispositivo):
-    consumoCamarasGeneral = 0.192
-    eei = (dispositivo['consumoMedio']/consumoCamarasGeneral)
+def get_camera_eei(dispositivo):
+    '''
+    Calcula el EEI de las cámaras
+    '''
+    consumo_camaras_general = 0.192
+    eei = dispositivo['consumoMedio']/consumo_camaras_general
 
     if eei <= 0.4:
         dispositivo['etiqueta'] = "A"
@@ -600,9 +626,12 @@ def getCameraEEI(dispositivo):
     else:
         dispositivo['etiqueta'] = "G"
 
-def getClimateEEI(dispositivo):
-    consumoTermostatosgeneral = 0.036
-    eei = (dispositivo['consumoMedio']/consumoTermostatosgeneral)
+def get_climate_eei(dispositivo):
+    '''
+    Calcula el EEI de los termostatos
+    '''
+    consumo_termostatos_general = 0.036
+    eei = dispositivo['consumoMedio']/consumo_termostatos_general
 
     if eei <= 0.3:
         dispositivo['etiqueta'] = "A"
@@ -619,15 +648,26 @@ def getClimateEEI(dispositivo):
     else:
         dispositivo['etiqueta'] = "G"
 
-def getMediaPlayerWithScreenEEI(dispositivo):
+def get_media_player_with_screen_eei(dispositivo):
+    '''
+    Calcula el EEI de los dispositivos multimedia con pantalla
+    '''
     pulgadas_dispositivo = dispositivo['hub']['pulgadas']
-    relación_pantalla_ancho = dispositivo['hub']['rel_ancho']
-    relación_pantalla_alto = dispositivo['hub']['rel_alto']
-    ancho_pantalla = (pulgadas_dispositivo/math.sqrt((relación_pantalla_ancho**2 + relación_pantalla_alto**2)))*relación_pantalla_ancho
-    alto_pantalla = (pulgadas_dispositivo/math.sqrt((relación_pantalla_ancho**2 + relación_pantalla_alto**2)))*relación_pantalla_alto
-    A = (ancho_pantalla*0.254)*(alto_pantalla*0.254)
-    C = 10 if dispositivo['hub']['t_pantalla'] == 'OLED' else 0
-    eei = ((dispositivo['potenciaMedia']+1)/(3*((90*math.tan(0.02+0.004*(A-11))+4)+3)+C))
+    res_pantalla_ancho = dispositivo['hub']['rel_ancho']
+    res_pantalla_alto = dispositivo['hub']['rel_alto']
+    ancho_pantalla = (
+        pulgadas_dispositivo/math.sqrt(
+            (res_pantalla_ancho**2 + res_pantalla_alto**2)
+            )
+        )*res_pantalla_ancho
+    alto_pantalla = (
+        pulgadas_dispositivo/math.sqrt(
+            (res_pantalla_ancho**2 + res_pantalla_alto**2)
+            )
+        )*res_pantalla_alto
+    a = (ancho_pantalla*0.254)*(alto_pantalla*0.254)
+    c = 10 if dispositivo['hub']['t_pantalla'] == 'OLED' else 0
+    eei = ((dispositivo['potenciaMedia']+1)/(3*((90*math.tan(0.02+0.004*(a-11))+4)+3)+c))
 
     if eei < 0.3:
         dispositivo['etiqueta'] = "A"
@@ -644,9 +684,12 @@ def getMediaPlayerWithScreenEEI(dispositivo):
     else:
         dispositivo['etiqueta'] = "G"
 
-def getMediaPlayerWithOutScreenEEI(dispositivo):
-    consumoAltavozInteligenteGeneral = 0.12
-    eei = (dispositivo['consumoMedio']/consumoAltavozInteligenteGeneral)
+def get_media_player_with_out_screen_eei(dispositivo):
+    '''
+    Calcula el EEI de los dispositivos multimedia sin pantalla
+    '''
+    consumo_altavoz_inteligente_general = 0.12
+    eei = dispositivo['consumoMedio']/consumo_altavoz_inteligente_general
 
     if eei <= 0.3:
         dispositivo['etiqueta'] = "A"
@@ -663,27 +706,54 @@ def getMediaPlayerWithOutScreenEEI(dispositivo):
     else:
         dispositivo['etiqueta'] = "G"
 
-async def save_measuresData(data):
+async def save_measures_data(data):
+    '''
+    Guarda las medidas globales de los consumos en la base de datos
+    '''
     try:
         print("Guardando mediciones globales de los consumos")
 
-        class mediciones_dispositivo:
-            def __init__(self, userName, device, estado, consumoMedio, potenciaMedia, intensidadMedia, etiqueta):
-                self.userName = userName
+        class MedicionesDispositivo:
+            '''
+            Clase para guardar las mediciones de los dispositivos
+            '''
+            def __init__(
+                    self,
+                    user_name,
+                    device,
+                    estado,
+                    consumo_medio,
+                    potencia_media,
+                    intensidad_media,
+                    etiqueta
+                    ):
+                self.user_name = user_name
                 self.device = device
                 self.estado = estado
-                self.consumoMedio = consumoMedio
-                self.potenciaMedia = potenciaMedia
-                self.intensidadMedia = intensidadMedia
+                self.consumo_medio = consumo_medio
+                self.potencia_media = potencia_media
+                self.intensidad_media = intensidad_media
                 self.etiqueta = etiqueta
-            
+
             def to_dict(self):
+                '''
+                Devuelve un diccionario con los datos de la clase
+                '''
                 return self.__dict__
-        
+
         mediciones_dispositivos = []
         for medicion in data:
-            mediciones_dispositivos.append(mediciones_dispositivo(medicion["userName"], medicion["device"], medicion["estado"], medicion["consumoMedio"], medicion["potenciaMedia"], medicion["intensidadMedia"], medicion["etiqueta"]))
-        
+            mediciones_dispositivos.append(
+                MedicionesDispositivo(
+                    medicion["userName"],
+                    medicion["device"],
+                    medicion["estado"],
+                    medicion["consumoMedio"],
+                    medicion["potenciaMedia"],
+                    medicion["intensidadMedia"],
+                    medicion["etiqueta"])
+                    )
+
         mediciones_dispositivos_dict = [medicion.to_dict() for medicion in mediciones_dispositivos]
 
         nueva_coleccion = "simConsumos"

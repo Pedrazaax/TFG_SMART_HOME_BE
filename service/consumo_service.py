@@ -170,8 +170,9 @@ async def get_dispositivos_simulador(user: User):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="No hay consumos para el simulador"
                 )
-        else:
-            return dispositivos_simulador
+        
+        return dispositivos_simulador
+        
     except HTTPException as e:
         raise e
     except Exception as e:

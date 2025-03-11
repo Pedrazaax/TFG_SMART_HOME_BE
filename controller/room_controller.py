@@ -89,7 +89,7 @@ async def add_room(
             )
 
     try:
-        return await room_service.addRoom(room_req)
+        return await room_service.add_room(room_req)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -112,7 +112,7 @@ async def delete_device(_id: str, user: User = Depends(current_user)):
             )
 
     try:
-        return await room_service.deleteRoom(_id)
+        return await room_service.delete_room(_id)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -135,7 +135,7 @@ async def set_room(device: Device, room_req:Room, user: User = Depends(current_u
             )
 
     try:
-        return await room_service.setRoom(device, room_req)
+        return await room_service.set_room(device, room_req)
     except HTTPException as e:
         raise e
     except Exception as e:
