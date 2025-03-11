@@ -10,7 +10,7 @@ from bson import json_util
 from bson import ObjectId
 from pymongo.errors import PyMongoError
 from fastapi import APIRouter, HTTPException, status, Depends
-from main import open_api_singleton
+from main import SingletonOpenApi
 from controller.auth_users_controller import current_user
 from db.models.user import User
 from db.models.device import Device, Command
@@ -22,7 +22,7 @@ app = APIRouter(prefix="/devices",
                    tags=["Devices"],
                    responses={404: {"detail":"No encontrado"}})
 
-OPEN_API = open_api_singleton.get_instance()
+OPEN_API = SingletonOpenApi.get_instance()
 
 # Ver dispositivos
 @app.get("/", response_model=List[Device])

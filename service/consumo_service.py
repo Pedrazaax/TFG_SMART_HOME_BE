@@ -7,12 +7,12 @@ from db.models.user import User
 from db.schemas.prueba_consumo import prueba_consumo_schema, tipo_prueba_schema, dispositivos_simulador_schema
 from asyncio import sleep
 from typing import List
-from main import open_api_singleton
+from main import SingletonOpenApi
 from service import device_service
 import time
 from datetime import datetime
 
-openapi = open_api_singleton.get_instance()
+openapi = SingletonOpenApi.get_instance()
 
 async def calculate_average_consumption(device_id: str, duration: int) -> tuple[float, List[float], List[float], List[float]]:
     kwh = 0

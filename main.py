@@ -4,7 +4,7 @@ Patrón singleton para instanciar un objeto de la api en todo el programa.
 
 from properties import get_openapi_instance
 
-class open_api_singleton:
+class SingletonOpenApi:
     '''
     Clase singleton para instanciar un objeto de la api en todo el programa. 
     '''
