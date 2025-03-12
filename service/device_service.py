@@ -41,4 +41,14 @@ async def search_device(field: str, key):
             status_code = 404,
             detail="No se ha encontrado el usuario" + str(e)
             ) from e
-    
+
+def ceck_openapi_response(response):
+    '''
+    Método para comprobar si la respuesta de openapi es correcta
+    '''
+    if response.get("code") == 28841002:
+        print("Error en la API de Tuya (NO PERMISSION)")
+        raise HTTPException(
+            status_code = 404,
+            detail="No tienes permisos en la API de Tuya"
+            )

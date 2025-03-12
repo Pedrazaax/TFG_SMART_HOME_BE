@@ -63,7 +63,9 @@ async def list_devices(user: User = Depends(current_user)):
 
     room = client.rooms.find_one({"name": "None"})
     try:
+
         respuesta = OPEN_API.get('/v1.3/iot-03/devices')
+        device_service.ceck_openapi_response(respuesta)
         devices_list = respuesta['result']['list']
         for device in devices_list:
             device_dict = {
@@ -131,6 +133,7 @@ async def info_device(id_device: str, user: User = Depends(current_user)):
             detail="Usuario no autenticado"
             )
     respuesta = OPEN_API.get(f'/v1.0/iot-03/devices/{id_device}')
+    device_service.ceck_openapi_response(respuesta)
 
     return respuesta
 
@@ -147,7 +150,7 @@ async def state_device(id_device: str, user: User = Depends(current_user)):
             detail="Usuario no autenticado"
             )
     respuesta = OPEN_API.get(f'/v1.0/iot-03/devices/{id_device}/status')
-
+    device_service.ceck_openapi_response(respuesta)
     #respuesta["result"] --> commands del idDevice Reemplazar en la bbdd Device
     command = respuesta["result"]
     return command
@@ -166,6 +169,7 @@ async def state_devices(id_device, user: User = Depends(current_user)):
             )
 
     respuesta = OPEN_API.get(f'/v1.0/iot-03/devices/status?device_ids={id_device}')
+    device_service.ceck_openapi_response(respuesta)
     return respuesta
 
 # Video Stream URL
@@ -182,7 +186,7 @@ async def video_stream(id_device: str, user: User = Depends(current_user)):
             )
     json_type = {"type":"hls"}
     respuesta = OPEN_API.post(f'/v1.0/devices/{id_device}/stream/actions/allocate', json_type)
-
+    device_service.ceck_openapi_response(respuesta)
     url =respuesta["result"]["url"]
 
     json_url = {
@@ -212,11 +216,11 @@ async def control_device(device: Device, user: User = Depends(current_user)):
     send_command = [command for command in commands if command.get("code") == device.key]
     print(send_command)
 
-    OPEN_API.post(
+    respuesta = OPEN_API.post(
         f'/v1.0/iot-03/devices/{device.id_device}/commands',
         {'commands': send_command}
         )
-
+    device_service.ceck_openapi_response(respuesta)
     return device
 
 # Eliminar dispositivo
