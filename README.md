@@ -1,8 +1,43 @@
+Autor: Carlos Pedraza Antona
+
 # TFG_SMART_HOME_BE
 
-## Introducción
-
 El proyecto TFG_Smart_Home_BE es la parte backend de una solución de hogar inteligente. Este sistema está diseñado para gestionar y controlar dispositivos inteligentes en un entorno doméstico, proporcionando una interfaz de usuario intuitiva y funcionalidades avanzadas para mejorar la comodidad y seguridad del hogar.
+
+## Ejecución en local
+
+A continuación, se van a detallar los pasos a seguir para ejecutar en local el proyecto.
+
+1. **Clonar el repositorio**
+
+```bash
+git clone https://github.com/Pedrazaax/TFG_SMART_HOME_BE.git
+```
+
+2. **Instalar las dependencias**
+
+```bash
+pip install -r requirements.txt
+```
+
+3. **Configurar las variables de entorno**
+    - Crear un archivo `.env` en la raíz del proyecto.
+    - Añadir las siguientes variables de entorno al archivo `.env`:
+    
+    ``` bash
+    ACCESS_ID
+    ACCESS_KEY
+    API_ENDPOINT
+    MQ_ENDPOINT
+    API_KEY_NVD
+    URL_DB
+    ```
+
+4. **Ejecutar la aplicación**
+
+```bash
+python -m uvicorn app:app --reload
+```
 
 ## Arquitectura de software del proyecto
 

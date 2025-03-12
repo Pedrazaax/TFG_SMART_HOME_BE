@@ -256,14 +256,14 @@ async def add_device(device:Device, user: User = Depends(current_user)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Usuario no autenticado"
             )
-    
+
     tipo = type(await device_service.search_device("idDevice", device.id_device))
     if tipo == Device:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="El dispositivo ya existe"
             )
-    
+
     device_dict = dict(device)
     del device_dict["id"]
 
