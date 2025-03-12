@@ -95,7 +95,7 @@ La arquitectura del proyecto sigue un enfoque modular y escalable, utilizando va
 
 - **`user_service.py`**: Este archivo contiene la lógica de negocio relacionada con la gestión de usuarios. Incluye funciones para agregar, eliminar, actualizar y obtener información de los usuarios.
 
-Gestiona la persistencia de datos. Esta capa interactúa con la base de datos para realizar operaciones CRUD (Crear, Leer, Actualizar, Eliminar). Se encuentra en el directorio [`db`](db/).
+4. **Base de datos (DB)**: Gestiona la persistencia de datos. Esta capa interactúa con la base de datos para realizar operaciones CRUD (Crear, Leer, Actualizar, Eliminar). Se encuentra en el directorio [`db`](db/).
 
 #### Estructura de la carpeta DB
 
@@ -129,7 +129,7 @@ La carpeta `db` está organizada en tres subdirectorios principales:
 
 - **`user_schema.py`**: Este archivo define el esquema de datos para los usuarios. Se utiliza para la validación y serialización de los datos de los usuarios.
 
-#### Archivo dentro de la carpeta Client
+#### Fichero Client
 
 - **`client.py`**: Este archivo contiene la configuración del cliente de la base de datos. Se utiliza para establecer la conexión con la base de datos y realizar operaciones CRUD en las colecciones de la base de datos.
 
