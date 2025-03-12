@@ -49,6 +49,6 @@ def ceck_openapi_response(response):
     if response.get("code") == 28841002:
         print("Error en la API de Tuya (NO PERMISSION)")
         raise HTTPException(
-            status_code = 404,
-            detail="No tienes permisos en la API de Tuya"
+            status_code = 403,
+            detail="No tienes permisos en la API de TUYA"
             )
