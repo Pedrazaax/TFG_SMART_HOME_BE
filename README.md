@@ -1,6 +1,6 @@
 Autor: Carlos Pedraza Antona
 
-# TFG_SMART_HOME_BE
+# TFG_SMART_HOME_BE - SERVIDOR (BACKEND)
 
 El proyecto TFG_Smart_Home_BE es la parte backend de una solución de hogar inteligente. Este sistema está diseñado para gestionar y controlar dispositivos inteligentes en un entorno doméstico, proporcionando una interfaz de usuario intuitiva y funcionalidades avanzadas para mejorar la comodidad y seguridad del hogar.
 
