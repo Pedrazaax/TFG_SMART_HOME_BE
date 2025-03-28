@@ -160,7 +160,6 @@ async def get_dispositivos_simulador(user: User):
     try:
         print("Listando consumos de los dispositivos para el simulador")
 
-        # Obtiene las pruebas de consumo de la base de datos del usuario
         dispositivos_simulador = dispositivos_simulador_schema(
             client.simConsumos.find({"userName": user.username})
             )
@@ -176,7 +175,7 @@ async def get_dispositivos_simulador(user: User):
     except HTTPException as e:
         raise e
     except Exception as e:
-        print("Error (localDeviceService): ", e)
+        print("Error (ConsumoService): ", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)

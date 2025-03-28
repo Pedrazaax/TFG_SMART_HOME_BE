@@ -73,7 +73,7 @@ def pruebas_sonsumo_local_schema(ps_consumo) -> list:
 def dispositivo_simulador_schema(dispositivos_simulador) -> dict:
     '''Devuelve un diccionario con los valores de un dispositivo simulador'''
     return {"userName": dispositivos_simulador["userName"],
-        "device": dispositivos_simulador["device"],
+        "devices": [str(device) for device in dispositivos_simulador["devices"]],
         "estado": dispositivos_simulador["estado"],
         "consumoMedio": dispositivos_simulador["consumoMedio"],
         "potenciaMedia": dispositivos_simulador["potenciaMedia"],

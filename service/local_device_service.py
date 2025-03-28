@@ -5,16 +5,14 @@ Funciones necesarias para guardar, listar y eliminar los tipos de prueba y prueb
 También contiene las funciones necesarias para guardar el token y dominio de Home Assistant.
 '''
 
-from fastapi import HTTPException, status
-
 from typing import List
 from asyncio import sleep
 import math
 import time
 from datetime import datetime
+from fastapi import HTTPException, status
 import httpx
 from bson import ObjectId
-
 from db.client import client
 from db.models.user import User
 from db.models.prueba_consumo import TipoPruebaLocal, PruebaConsumoLocal

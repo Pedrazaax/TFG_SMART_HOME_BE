@@ -82,7 +82,7 @@ class DispositivosSimulador(BaseModel):
     '''Modelo para los dispositivos del simulador'''
     userName: Optional[str]
     device: Optional[str]
-    estado: Optional[str]
+    estados: List[str]
     consumoMedio: Optional[str]
     potenciaMedia: Optional[str]
     intensidadMedia: Optional[str]
