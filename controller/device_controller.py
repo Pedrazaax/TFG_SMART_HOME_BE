@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from config.main import SingletonOpenApi
 from controller.auth_users_controller import current_user
 from db.models.user import User
-from db.models.device import Device, Command
+from db.models.Device import Device, Command
 from db.schemas.device import device_schema, devices_schema
 from db.client import client
 from service import device_service

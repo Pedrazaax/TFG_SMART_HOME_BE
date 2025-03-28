@@ -5,7 +5,7 @@ Descripción: Clase que contiene los métodos necesarios para el manejo de los d
 
 from fastapi import HTTPException
 from db.client import client
-from db.models.device import Device
+from db.models.Device import Device
 from db.schemas.device import device_schema
 
 async def no_comillas(commands):

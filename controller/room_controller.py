@@ -6,8 +6,8 @@ Descripción: CRUD de las habitaciones de la casa
 from bson import ObjectId
 from fastapi import APIRouter, HTTPException, status, Depends
 from controller.auth_users_controller import current_user
-from db.models.room import Room
-from db.models.device import Device
+from db.models.Room import Room
+from db.models.Device import Device
 from db.client import client
 from db.models.user import User
 from db.schemas.room import rooms_schema

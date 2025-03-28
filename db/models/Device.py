@@ -4,7 +4,7 @@ Device model
 
 from typing import List, Union, Optional
 from pydantic import BaseModel
-from db.models.room import Room
+from db.models.Room import Room
 
 class Command(BaseModel):
     '''comandos de los dispositivos'''

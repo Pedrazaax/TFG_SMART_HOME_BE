@@ -6,8 +6,8 @@ de gestionar las peticiones de la clase Room.
 
 from bson import ObjectId
 from db.client import client
-from db.models.room import Room
-from db.models.device import Device
+from db.models.Room import Room
+from db.models.Device import Device
 from db.schemas.room import room_schema
 from fastapi import HTTPException, status
 
