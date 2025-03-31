@@ -17,7 +17,7 @@ git clone https://github.com/Pedrazaax/TFG_SMART_HOME_BE.git
 2. **Instalar las dependencias**
 
 ```bash
-pip install -r requirements.txt
+pip install -r config/requirements.txt
 ```
 
 3. **Configurar las variables de entorno**
